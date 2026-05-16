@@ -10,6 +10,8 @@ import { A2AConversation } from "@/components/A2AConversation";
 import { ConnectedAgents } from "@/components/ConnectedAgents";
 import { Button } from "@/components/ui/button";
 
+const OPS_HAPCONSOLE = "http://localhost:5560/ops?view=hapconsole&chrome=0";
+
 export default function HapConsolePage() {
   const [briefVisible, setBriefVisible] = useState(false);
   const [auditOpen, setAuditOpen] = useState(false);
@@ -103,6 +105,32 @@ export default function HapConsolePage() {
           </div>
         </div>
         <StaffBrief visible={briefVisible} />
+      </div>
+
+      {/* HEART operational event stream — the live shared /ops feed, merged
+          in so the unified HAP Console module surfaces both views as one.
+          Renders only when the /ops runtime is reachable on this machine. */}
+      <div className="mt-14 border-t border-bronze/15 pt-8">
+        <div className="mb-4">
+          <div className="text-[0.7rem] uppercase tracking-[0.28em] text-bronze mb-1.5">
+            Operational stream
+          </div>
+          <h3 className="font-serif text-2xl text-ink">HEART event feed · live</h3>
+          <p className="text-ink/55 text-sm mt-2 max-w-2xl leading-relaxed">
+            Every HAP event recorded by the HEART runtime — the same shared
+            feed staff watches at the front desk, embedded here for protocol
+            observers. Only present when the HEART runtime (port 5560) is
+            running on this machine.
+          </p>
+        </div>
+        <div className="border border-bronze/20 rounded-sm overflow-hidden bg-white">
+          <iframe
+            src={OPS_HAPCONSOLE}
+            title="HEART HAP event stream"
+            className="w-full"
+            style={{ height: 620, border: 0 }}
+          />
+        </div>
       </div>
 
       {/* audit log — collapsible for the developers / compliance eye */}

@@ -28,7 +28,7 @@ const nav = [
   { href: "/hap-console", label: "HAP Console" },
   { href: "/reputation", label: "Reputation Audit" },
   { href: "/welcome-email", label: "Welcome Email" },
-  { href: "/install", label: "Install Plugin" },
+  { href: "/install", label: "HAP Installation" },
 ];
 
 export default function RootLayout({
