@@ -9,8 +9,13 @@ Building a demonstrable proof-of-concept for **HAP — Hospitality Agent Protoco
 **Pitch:** *"Agents are the new SEO. Rosewood is where agents bring their humans."*
 **Time budget:** 12 hours total. Feature freeze at hour 8. Total freeze at hour 11.
 
-## Second Brain
-Linked: `~/Documents/GitHub/Second-Brain/01_WIKI/proyectos/rosewood-hackathon-aisociety.md` (run `sb link` to create).
+## Working Directory & Repo
+
+- **Working directory:** `~/Documents/GitHub/HEART/luis/`
+- **Repo:** [`jgc-a/HEART`](https://github.com/jgc-a/HEART) (public, Guillermo's). Luis has push permission.
+- **Branch policy:** work directly on `main`. Changes only inside `luis/` subfolder. Guillermo owns repo root.
+- **Mirror (private backup, archived):** `luisvargasfdz/rosewood-hackathon-aisociety`. Not used anymore — all active work lives here.
+- **Second Brain:** `~/Documents/GitHub/Second-Brain/01_WIKI/proyectos/rosewood-hackathon-aisociety.md`
 
 ## Stack
 
@@ -24,9 +29,12 @@ Linked: `~/Documents/GitHub/Second-Brain/01_WIKI/proyectos/rosewood-hackathon-ai
 ## Directory Structure
 
 ```
-rosewood-hackathon-aisociety/
-├── CLAUDE.md                    # This file
-├── README.md                    # Public-facing
+HEART/                           # Guillermo's repo root (DO NOT touch root files)
+├── README.md                    # Guillermo's (do not edit)
+├── LICENSE                      # Guillermo's
+└── luis/                        # ← all our work goes here
+    ├── CLAUDE.md                # This file
+    ├── README.md                # luis/-scoped README
 ├── docs/
 │   ├── hap-spec.md              # HAP Draft Specification v0.1 (RFC-style)
 │   ├── demo-storyboard.md       # 3-min live demo, timed second-by-second
