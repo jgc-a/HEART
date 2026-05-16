@@ -199,10 +199,13 @@ async def play_conversation(
 
     Returns a summary dict. Never raises if a step inside fails — emits a
     partial result so callers can fall back gracefully.
-    """
-    if stay_id in _running and not _running[stay_id].done():
-        return {"ok": False, "reason": "already_running", "stay_id": stay_id}
 
+    Single-flight is enforced by kick_off_conversation_task (the public
+    entry point) — checking _running here would be a self-reference when
+    invoked via that path, since the task registers itself before its
+    coroutine starts running.
+    """
+    print(f"[voice] starting conversation · chat={chat_id} · stay={stay_id}", flush=True)
     script = build_script(profile, flow_profile)
     guest_token = _guest_token()
     heart_token = _heart_token()
@@ -238,12 +241,14 @@ async def play_conversation(
                 errors.append(f"{speaker}: {exc}")
             await asyncio.sleep(pause_between_turns_s)
 
-    return {
+    result = {
         "ok": len(delivered) > 0,
         "stay_id": stay_id,
         "turns_delivered": len(delivered),
         "errors": errors,
     }
+    print(f"[voice] conversation finished · {result}", flush=True)
+    return result
 
 
 def kick_off_conversation_task(
@@ -255,14 +260,43 @@ def kick_off_conversation_task(
 
     Returns the Task so callers can attach a done-callback, or None if the
     group chat / tokens / api key aren't configured.
+
+    Single-flight: if a task with this stay_id is already in flight, return
+    the existing task instead of starting a new one.
     """
     chat_id = _group_chat_id()
-    if not chat_id or not _api_key() or not _guest_token() or not _heart_token():
+    if not chat_id:
+        print("[voice] kick_off skipped: HAP_VOICE_GROUP_CHAT_ID not set", flush=True)
+        return None
+    if not _api_key():
+        print("[voice] kick_off skipped: ELEVENLABS_API_KEY not set", flush=True)
+        return None
+    if not _guest_token():
+        print("[voice] kick_off skipped: TELEGRAM_GUEST_BOT_TOKEN not set", flush=True)
+        return None
+    if not _heart_token():
+        print("[voice] kick_off skipped: TELEGRAM_BOT_TOKEN not set", flush=True)
         return None
     if stay_id in _running and not _running[stay_id].done():
+        print(f"[voice] kick_off short-circuit: stay_id={stay_id} already in flight", flush=True)
         return _running[stay_id]
+
+    print(f"[voice] kick_off scheduling conversation · chat={chat_id} · stay={stay_id}", flush=True)
     task = asyncio.create_task(
         play_conversation(chat_id, profile, flow_profile, stay_id)
     )
     _running[stay_id] = task
+
+    # Log task completion / failures so async errors don't disappear silently
+    def _on_done(t: asyncio.Task) -> None:
+        try:
+            exc = t.exception()
+            if exc:
+                print(f"[voice] task failed for stay={stay_id}: {exc!r}", flush=True)
+            else:
+                print(f"[voice] task done for stay={stay_id}: {t.result()}", flush=True)
+        except asyncio.CancelledError:
+            print(f"[voice] task cancelled for stay={stay_id}", flush=True)
+
+    task.add_done_callback(_on_done)
     return task
