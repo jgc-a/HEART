@@ -7,6 +7,7 @@ import { AuditLogStream } from "@/components/AuditLogStream";
 import { TelegramPanel } from "@/components/TelegramPanel";
 import { LiveGuestAgent } from "@/components/LiveGuestAgent";
 import { A2AConversation } from "@/components/A2AConversation";
+import { ConnectedAgents } from "@/components/ConnectedAgents";
 import { Button } from "@/components/ui/button";
 
 export default function HapConsolePage() {
@@ -30,6 +31,11 @@ export default function HapConsolePage() {
             in the loop.
           </p>
         </div>
+      </div>
+
+      {/* connected MCP-style agents — "apps with access" surface */}
+      <div className="mb-5">
+        <ConnectedAgents />
       </div>
 
       {/* live telegram channel — proves the chain is real */}

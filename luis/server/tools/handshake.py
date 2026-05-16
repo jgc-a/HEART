@@ -11,7 +11,7 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
-from .. import audit  # type: ignore[relative-beyond-top-level]
+from .. import audit, sessions  # type: ignore[relative-beyond-top-level]
 
 
 class HandshakeInput(BaseModel):
@@ -30,6 +30,16 @@ class HandshakeInput(BaseModel):
     )
     ttl_hours: int = Field(default=72, ge=1, le=720)
     property_id: str = Field(default="rosewood-sand-hill")
+    client_kind: str = Field(
+        default="claude",
+        description="What kind of agent is connecting: claude_desktop | claude_code | telegram_bot | web_claude | custom",
+    )
+    client_label: str | None = Field(
+        default=None, description="Human-readable client label for the dashboard"
+    )
+    guest_display: str | None = Field(
+        default=None, description="Display name for the guest in the dashboard"
+    )
 
 
 class HandshakeOutput(BaseModel):
@@ -170,7 +180,27 @@ def run(payload: HandshakeInput) -> HandshakeOutput:
             "property_id": payload.property_id,
             "ttl_hours": payload.ttl_hours,
             "scope_granted": scope_granted,
+            "client_kind": payload.client_kind,
         },
+    )
+
+    # Register this as an active connected agent
+    sessions.open_session(
+        session_id=session_id,
+        guest_id=payload.guest_id,
+        scope=scope_granted,
+        ttl_hours=payload.ttl_hours,
+        client_kind=payload.client_kind,
+        client_label=payload.client_label,
+        guest_display=payload.guest_display or payload.guest_id,
+    )
+
+    audit.append(
+        event="HAP.PLUGIN.SESSION_OPENED",
+        guest_id=payload.guest_id,
+        session_id=session_id,
+        scope=scope_granted,
+        extra={"client_kind": payload.client_kind, "ttl_hours": payload.ttl_hours},
     )
 
     checklist = _build_checklist(payload.scope_requested, payload.property_id)

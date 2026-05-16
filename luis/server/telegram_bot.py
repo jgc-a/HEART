@@ -41,8 +41,12 @@ from telegram.ext import (  # noqa: E402
     filters,
 )
 
-from server import audit, guest_agent  # noqa: E402
-from server.tools import arrival as arrival_tool, handshake as handshake_tool  # noqa: E402
+from server import audit, guest_agent, sessions  # noqa: E402
+from server.tools import (  # noqa: E402
+    arrival as arrival_tool,
+    checkout as checkout_tool,
+    handshake as handshake_tool,
+)
 
 TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
 USERS_FILE = _HERE / "data" / "telegram_users.json"
@@ -365,6 +369,54 @@ async def cmd_start(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
             "chat_id": chat.id,
             "label": f"Interview started with {user.first_name or 'guest'}",
         }
+    )
+
+
+async def cmd_checkout(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
+    """End the stay — revoke every active HAP session for this chat.
+
+    This is the lifecycle bookend: same way you'd revoke an OAuth grant on
+    Google or remove a plugin from Claude Desktop, /checkout disconnects
+    the HAP plugin and writes the revocation to the audit log.
+    """
+    chat = update.effective_chat
+    if chat is None or update.message is None:
+        return
+
+    chat_id = chat.id
+    profile = guest_agent.get_profile(chat_id)
+    guest_id = f"telegram_{chat_id}"
+
+    result = checkout_tool.run(
+        checkout_tool.CheckoutInput(
+            guest_id=guest_id,
+            reason="user_checkout",
+        )
+    )
+
+    if not result.revoked:
+        await update.message.reply_text(
+            "🔌 No active HAP session to close. Use /start to begin a new stay."
+        )
+        return
+
+    emit_event(
+        {
+            "ts": _now_iso(),
+            "kind": "session_revoked",
+            "chat_id": chat_id,
+            "label": f"HAP plugin disconnected · {len(result.revoked)} session(s) revoked",
+        }
+    )
+
+    display = profile.get("display_name") or "your stay"
+    await update.message.reply_text(
+        f"🔌 *Checkout complete*\n\n"
+        f"Your HAP plugin has disconnected from Rosewood Sand Hill.\n"
+        f"_{len(result.revoked)} session(s) revoked · {display}_\n\n"
+        "The audit log retains the operational signal (pseudonymous), but the "
+        "property no longer has any access token for your agent. Thank you for staying.",
+        parse_mode=ParseMode.MARKDOWN,
     )
 
 
@@ -811,6 +863,9 @@ async def _run_three_phase_flow(query, ctx: ContextTypes.DEFAULT_TYPE, chat_id: 
                 guest_id=guest_id,
                 scope_requested=scopes,
                 ttl_hours=72,
+                client_kind="telegram_bot",
+                client_label=f"@Rosewood_sandhill_hap_bot · chat {chat_id}",
+                guest_display=profile.get("display_name") or first_name or f"Guest {chat_id}",
             )
         )
     except Exception as exc:  # noqa: BLE001
@@ -1194,6 +1249,7 @@ def main() -> None:
     app.add_handler(CommandHandler("handshake", cmd_handshake))
     app.add_handler(CommandHandler("demo", cmd_demo))
     app.add_handler(CommandHandler("persona", cmd_persona))
+    app.add_handler(CommandHandler("checkout", cmd_checkout))
     app.add_handler(CallbackQueryHandler(cb_consent, pattern=r"^hap:"))
     # Plain text → conversational guest agent (must be last so it's the fallback)
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, cb_message))
