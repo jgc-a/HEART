@@ -1,0 +1,79 @@
+{
+  "_schema": "hap-stay-extras/v0.1",
+  "_description": "Mock in-stay charges per persona. Used by the /checkout flow to render a real-looking invoice and to demonstrate billing split per HAP §6 (HAP.BILLING.RESOLVED, HAP.CORPORATE.BILLING_VALIDATED).",
+
+  "luis": {
+    "currency": "USD",
+    "nightly_rate": 880,
+    "stay_nights": 6,
+    "room_total": 5280,
+    "extras": [
+      { "item": "Room service · Wed dinner (trout local)", "amount": 87,  "billing_default": "personal" },
+      { "item": "Minibar · Mountain Valley × 4",            "amount": 24,  "billing_default": "personal" },
+      { "item": "Sequoia restaurant · Tue lunch w/ a16z",   "amount": 145, "billing_default": "corporate" },
+      { "item": "Sequoia restaurant · Wed dinner Sequoia",  "amount": 178, "billing_default": "corporate" },
+      { "item": "Spa massage · 80 min deep tissue · Thu",   "amount": 260, "billing_default": "personal" },
+      { "item": "Stanford Sierra olive oil tasting",         "amount": 0,   "billing_default": "complimentary" }
+    ],
+    "tax_rate": 0.095,
+    "stay_dates": { "arrival": "2026-05-18", "departure": "2026-05-24" }
+  },
+
+  "marcus": {
+    "currency": "USD",
+    "nightly_rate": 1450,
+    "stay_nights": 3,
+    "room_total": 4350,
+    "extras": [
+      { "item": "Madera · Mon investor dinner (party of 6)", "amount": 1240, "billing_default": "corporate" },
+      { "item": "Single-origin coffee · daily × 3",          "amount": 36,   "billing_default": "corporate" },
+      { "item": "Late-night room service · Tue",             "amount": 95,   "billing_default": "corporate" },
+      { "item": "Pressing service",                           "amount": 48,   "billing_default": "corporate" }
+    ],
+    "tax_rate": 0.095,
+    "stay_dates": { "arrival": "2026-05-25", "departure": "2026-05-28" }
+  },
+
+  "guillermo": {
+    "currency": "USD",
+    "nightly_rate": 950,
+    "stay_nights": 2,
+    "room_total": 1900,
+    "extras": [
+      { "item": "Early espresso × 2 (06:30 daily)",      "amount": 24,  "billing_default": "corporate" },
+      { "item": "Pressing service · 2 shirts",            "amount": 36,  "billing_default": "corporate" },
+      { "item": "Car service · off-property meetings",    "amount": 280, "billing_default": "corporate" },
+      { "item": "Light breakfast × 2",                    "amount": 64,  "billing_default": "corporate" }
+    ],
+    "tax_rate": 0.095,
+    "stay_dates": { "arrival": "2026-05-22", "departure": "2026-05-24" }
+  },
+
+  "family_johnson": {
+    "currency": "USD",
+    "nightly_rate": 1100,
+    "stay_nights": 5,
+    "room_total": 5500,
+    "extras": [
+      { "item": "Children's menu × 8 services",                "amount": 192, "billing_default": "personal" },
+      { "item": "Pool floats & kids amenity kit",              "amount": 75,  "billing_default": "personal" },
+      { "item": "Hidden Villa farm experience (family of 4)",  "amount": 320, "billing_default": "personal" },
+      { "item": "Pacific Northwest tasting menu × 2 adults",    "amount": 280, "billing_default": "personal" },
+      { "item": "Filoli Gardens private guide",                 "amount": 0,   "billing_default": "complimentary" }
+    ],
+    "tax_rate": 0.095,
+    "stay_dates": { "arrival": "2026-05-30", "departure": "2026-06-03" }
+  },
+
+  "default": {
+    "currency": "USD",
+    "nightly_rate": 780,
+    "stay_nights": 2,
+    "room_total": 1560,
+    "extras": [
+      { "item": "Standard amenities",                          "amount": 0,  "billing_default": "complimentary" }
+    ],
+    "tax_rate": 0.095,
+    "stay_dates": { "arrival": "TBD", "departure": "TBD" }
+  }
+}
