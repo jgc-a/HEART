@@ -288,6 +288,27 @@ async def cmd_start(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
     chat = update.effective_chat
     if user is None or chat is None or update.message is None:
         return
+
+    # If the user came from a Telegram deep link (?start=stay-SH-...), the
+    # booking reference arrives as ctx.args[0]. Acknowledge it as the entry
+    # point from the welcome email — the bot is the Guest Agent surface on
+    # mobile.
+    booking_ref: str | None = None
+    if ctx.args and ctx.args[0].startswith("stay-"):
+        booking_ref = ctx.args[0]
+        emit_event(
+            {
+                "ts": _now_iso(),
+                "kind": "email_deeplink",
+                "chat_id": chat.id,
+                "label": f"Opened from booking confirmation · {booking_ref}",
+            }
+        )
+        audit.append(
+            event="HAP.PLUGIN.OPENED_FROM_EMAIL",
+            guest_id=user.username or str(user.id),
+            extra={"chat_id": chat.id, "booking_ref": booking_ref},
+        )
     users = load_users()
     users[str(chat.id)] = {
         "chat_id": chat.id,

@@ -16,6 +16,16 @@ type State =
   | { kind: "installed_pending_restart" }
   | { kind: "error"; message: string };
 
+// The Telegram deep link with a start-parameter that the bot can recognize
+// as "came from the booking confirmation".
+const TELEGRAM_BOT = "Rosewood_sandhill_hap_bot";
+const STAY_REF = "stay-SH-2026-0518-LV";
+const TG_DEEPLINK = `https://t.me/${TELEGRAM_BOT}?start=${STAY_REF}`;
+// External QR generator — we don't need a JS library for this demo.
+const TG_QR = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=8&color=2D4A3E&bgcolor=F5F1E8&data=${encodeURIComponent(
+  TG_DEEPLINK
+)}`;
+
 export default function WelcomeEmailPage() {
   const [status, setStatus] = useState<InstallStatus | null>(null);
   const [state, setState] = useState<State>({ kind: "idle" });
@@ -134,57 +144,133 @@ export default function WelcomeEmailPage() {
               </ul>
             </div>
 
-            {/* The CTA */}
-            <div className="py-4">
-              {installed ? (
-                <div className="bg-forest/8 border border-forest/40 rounded-md p-5">
-                  <div className="flex items-center gap-3 mb-2">
-                    <span className="w-2 h-2 rounded-full bg-forest" />
-                    <span className="text-forest text-[0.78rem] uppercase tracking-[0.22em] font-semibold">
-                      HAP plugin connected
-                    </span>
+            {/* The CTA — three paths depending on device */}
+            <div className="py-4 space-y-5">
+              {/* PATH A — Desktop with Claude Desktop */}
+              <div className="border border-forest/30 bg-forest/[0.04] rounded-md p-5">
+                <div className="flex items-center justify-between gap-3 mb-3">
+                  <div className="text-[0.65rem] uppercase tracking-[0.22em] text-forest font-semibold">
+                    On this Mac · with Claude Desktop
                   </div>
-                  <p className="text-ink/80 text-[0.92rem] leading-relaxed">
-                    Your Claude is connected to Rosewood. Open any Claude chat
-                    and say
-                    <em>
-                      &nbsp;&ldquo;Open my Rosewood handshake&rdquo;&nbsp;
-                    </em>
-                    to begin. The plugin will disconnect automatically at
-                    checkout — no action required.
-                  </p>
-                  <div className="mt-3 flex gap-3">
+                  {installed && (
+                    <span className="inline-flex items-center gap-1.5 text-forest text-[0.65rem] uppercase tracking-[0.18em]">
+                      <span className="w-1.5 h-1.5 rounded-full bg-forest animate-pulse-dot" />
+                      Connected
+                    </span>
+                  )}
+                </div>
+
+                {installed ? (
+                  <>
+                    <p className="text-ink/80 text-[0.92rem] leading-relaxed mb-3">
+                      Your Claude is connected to Rosewood. Open any Claude
+                      chat and say
+                      <em>&nbsp;&ldquo;Open my Rosewood handshake&rdquo;&nbsp;</em>
+                      to begin. The plugin disconnects automatically at
+                      checkout.
+                    </p>
+                    <div className="flex flex-wrap gap-3">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={onConnect}
+                        className="border-forest/40 text-forest hover:bg-forest/10 uppercase tracking-[0.16em] text-[0.65rem]"
+                      >
+                        Reinstall / refresh
+                      </Button>
+                      <a
+                        href="/hap-console"
+                        className="inline-flex items-center text-forest text-[0.78rem] underline underline-offset-2 hover:text-forest/80"
+                      >
+                        Open the live console →
+                      </a>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-ink/75 text-[0.9rem] leading-relaxed mb-4">
+                      Installs the Rosewood plugin in Claude Desktop. One
+                      click. Auto-disconnects at checkout.
+                    </p>
                     <Button
-                      size="sm"
-                      variant="outline"
+                      size="lg"
                       onClick={onConnect}
-                      className="border-forest/40 text-forest hover:bg-forest/10 uppercase tracking-[0.16em] text-[0.65rem]"
+                      disabled={buttonDisabled}
+                      className="bg-forest text-cream hover:bg-forest/90 uppercase tracking-[0.22em] text-[0.78rem] font-medium px-7 py-5 disabled:opacity-50 w-full sm:w-auto"
                     >
-                      Reinstall / refresh
+                      {state.kind === "installing"
+                        ? "Connecting your Claude…"
+                        : "🤝 Connect HAP to my Claude"}
                     </Button>
+                  </>
+                )}
+              </div>
+
+              {/* PATH B — On your phone */}
+              <div className="border border-bronze/30 bg-bronze/[0.04] rounded-md p-5">
+                <div className="text-[0.65rem] uppercase tracking-[0.22em] text-bronze font-semibold mb-3">
+                  On your phone · without a desktop Claude
+                </div>
+                <div className="flex flex-col sm:flex-row sm:items-center gap-5">
+                  <div className="flex-1">
+                    <p className="text-ink/80 text-[0.9rem] leading-relaxed mb-4">
+                      Tap below to open the Rosewood concierge on Telegram.
+                      Your phone becomes your Guest Agent for this stay — same
+                      protocol, same handshake, same TTL.
+                    </p>
                     <a
-                      href="/hap-console"
-                      className="inline-flex items-center text-forest text-[0.78rem] underline underline-offset-2 hover:text-forest/80"
+                      href={TG_DEEPLINK}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center justify-center w-full sm:w-auto bg-bronze text-cream hover:bg-bronze/90 uppercase tracking-[0.22em] text-[0.78rem] font-medium px-7 py-3.5 rounded-md"
                     >
-                      Open the live console →
+                      ✈️ Open Rosewood on Telegram
                     </a>
+                    <div className="mt-3 text-[0.7rem] text-ink/50">
+                      Bot: <code className="font-mono">@{TELEGRAM_BOT}</code>
+                    </div>
+                  </div>
+                  <div className="hidden sm:flex flex-col items-center shrink-0">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={TG_QR}
+                      alt="QR code to open Rosewood Telegram bot"
+                      width={120}
+                      height={120}
+                      className="rounded-md border border-bronze/25 bg-cream-soft p-1"
+                    />
+                    <div className="text-[0.6rem] text-ink/45 mt-1.5 uppercase tracking-[0.18em]">
+                      Scan with phone
+                    </div>
                   </div>
                 </div>
-              ) : (
-                <div className="flex flex-col items-center text-center gap-4 py-4">
-                  <Button
-                    size="lg"
-                    onClick={onConnect}
-                    disabled={buttonDisabled}
-                    className="bg-forest text-cream hover:bg-forest/90 uppercase tracking-[0.22em] text-[0.78rem] font-medium px-9 py-6 disabled:opacity-50"
-                  >
-                    {state.kind === "installing"
-                      ? "Connecting your Claude…"
-                      : "🤝 Connect HAP to my Claude"}
-                  </Button>
-                  <p className="text-ink/55 text-[0.78rem]">
-                    Installs the Rosewood plugin on this Mac · 1 click
-                  </p>
+              </div>
+
+              {/* PATH C — Cross-device */}
+              <div className="text-center text-ink/55 text-[0.78rem] py-2">
+                Reading this on a phone? The Telegram button above is for you.
+                Reading on a laptop? Use Claude Desktop above, or scan the QR
+                with your phone for the Telegram path.
+              </div>
+
+              {state.kind === "installed_pending_restart" && !installed && (
+                <div className="mt-4 bg-bronze/10 border border-bronze/30 rounded-md p-4 text-[0.85rem] text-ink/75">
+                  <strong className="text-bronze uppercase tracking-[0.18em] text-[0.62rem] block mb-1.5">
+                    Almost there
+                  </strong>
+                  The plugin was added. Quit Claude Desktop (Cmd+Q) and
+                  re-open it, then come back to this page.
+                </div>
+              )}
+
+              {state.kind === "error" && (
+                <div className="mt-4 bg-rose-50 border border-rose-200 rounded-md p-4 text-[0.85rem] text-rose-900">
+                  <strong className="uppercase tracking-[0.18em] text-[0.62rem] block mb-1.5">
+                    Install hit a snag
+                  </strong>
+                  <code className="font-mono text-[0.78rem] block break-all">
+                    {state.message}
+                  </code>
                 </div>
               )}
 
