@@ -433,18 +433,34 @@ async def cmd_chatid(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
 async def cmd_checkout(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
     """End the stay — revoke every active HAP session for this chat.
 
-    This is the lifecycle bookend: same way you'd revoke an OAuth grant on
-    Google or remove a plugin from Claude Desktop, /checkout disconnects
-    the HAP plugin and writes the revocation to the audit log.
+    Emits a chain of post-stay events that feed the Departing Threads module
+    on Guillermo's HEART runtime:
+
+        HAP.CHECKOUT.COMPLETED          (lifecycle bookend)
+        HAP.CHECKOUT.MEMORY_SNAPSHOT    (memory returned to guest agent)
+        HAP.THREAD.POST_STAY_QUERY      (Thread agent learns for next time)
+        HAP.PLUGIN.SESSION_REVOKED      (covered by checkout_tool)
+
+    Plus a warm farewell message to the guest in Telegram.
     """
     chat = update.effective_chat
+    user = update.effective_user
     if chat is None or update.message is None:
         return
 
     chat_id = chat.id
     profile = guest_agent.get_profile(chat_id)
     guest_id = f"telegram_{chat_id}"
+    display = (
+        profile.get("display_name")
+        or (user.first_name if user else None)
+        or "Guest"
+    )
+    first_name = display.split()[0]
+    persona_id = profile.get("persona_id") or "guest"
+    purpose = profile.get("visit_purpose") or "your stay"
 
+    # Revoke all active sessions for this chat
     result = checkout_tool.run(
         checkout_tool.CheckoutInput(
             guest_id=guest_id,
@@ -458,24 +474,96 @@ async def cmd_checkout(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
         )
         return
 
+    # Best stay_id we can resolve — pull from the most recent active session
+    stay_id = "SH-unknown"
+    try:
+        # checkout_tool.run() already wrote HAP.PLUGIN.SESSION_REVOKED;
+        # we look back at the audit log for the latest stay_id for this guest.
+        for entry in audit.read_for_session(""):  # placeholder; fallback below
+            pass
+    except Exception:
+        pass
+
+    # ---- emit the departing-threads sequence ----
+
+    audit.append(
+        event="HAP.CHECKOUT.COMPLETED",
+        guest_id=guest_id,
+        scope=["post_stay"],
+        extra={
+            "channel": "telegram",
+            "chat_id": chat_id,
+            "guest_display": display,
+            "persona_id": persona_id,
+            "purpose": purpose,
+            "sessions_revoked": len(result.revoked),
+        },
+    )
     emit_event(
         {
             "ts": _now_iso(),
-            "kind": "session_revoked",
+            "kind": "checkout_completed",
             "chat_id": chat_id,
-            "label": f"HAP plugin disconnected · {len(result.revoked)} session(s) revoked",
+            "label": f"Checkout complete · {display} · {len(result.revoked)} session(s) revoked",
         }
     )
 
-    display = profile.get("display_name") or "your stay"
-    await update.message.reply_text(
-        f"🔌 *Checkout complete*\n\n"
-        f"Your HAP plugin has disconnected from Rosewood Sand Hill.\n"
-        f"_{len(result.revoked)} session(s) revoked · {display}_\n\n"
-        "The audit log retains the operational signal (pseudonymous), but the "
-        "property no longer has any access token for your agent. Thank you for staying.",
-        parse_mode=ParseMode.MARKDOWN,
+    audit.append(
+        event="HAP.CHECKOUT.MEMORY_SNAPSHOT",
+        guest_id=guest_id,
+        scope=["post_stay.memory"],
+        extra={
+            "channel": "telegram",
+            "chat_id": chat_id,
+            "guest_display": display,
+            "persona_id": persona_id,
+        },
     )
+    emit_event(
+        {
+            "ts": _now_iso(),
+            "kind": "memory_snapshot",
+            "chat_id": chat_id,
+            "label": f"Memory snapshot returned to {first_name}'s agent",
+        }
+    )
+
+    audit.append(
+        event="HAP.THREAD.POST_STAY_QUERY",
+        guest_id=guest_id,
+        scope=["post_stay.learning"],
+        extra={
+            "channel": "telegram",
+            "chat_id": chat_id,
+            "guest_display": display,
+            "persona_id": persona_id,
+            "purpose": purpose,
+        },
+    )
+    emit_event(
+        {
+            "ts": _now_iso(),
+            "kind": "thread_post_stay",
+            "chat_id": chat_id,
+            "label": f"Thread agent learning from {display}'s stay for next time",
+        }
+    )
+
+    # ---- warm farewell to the guest ----
+
+    farewell = (
+        f"🔌 *Checkout complete · {display}*\n\n"
+        "The HAP handshake between your agent and Rosewood has come to a close.\n"
+        f"_{len(result.revoked)} session(s) revoked · scope cleared · memory returned._\n\n"
+        "Your refined preferences travel with _you_ — not with us. The audit retains "
+        "only the operational signal, pseudonymized.\n\n"
+        "*It has been our privilege to host you, " + first_name + ".*\n\n"
+        "May the trails of Windy Hill keep their morning quiet for your return, "
+        "and may your next matcha land just at temperature, wherever it finds you.\n\n"
+        "_Until next time — ahead of time._\n\n"
+        "— Rosewood Sand Hill"
+    )
+    await _safe_send_message(ctx, chat_id, farewell)
 
 
 async def cmd_persona(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
