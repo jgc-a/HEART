@@ -62,7 +62,7 @@ export const guests: Guest[] = [
   },
   {
     id: "guillermo_aldana",
-    name: "Guillermo Aldana",
+    name: "Guillermo Chávez",
     flow: "Corporate",
     arrivalDate: "May 22, 2026",
     arrivalDateISO: "2026-05-22",

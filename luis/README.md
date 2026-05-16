@@ -67,7 +67,7 @@ pnpm dev
 | Guest | Profile | Purpose |
 |---|---|---|
 | **Luis Vargas** | Bleisure (Corp Mon-Wed + Leisure Thu-Sat) | Live demo persona |
-| **Guillermo Aldana** | Corporate / VC | Backup persona |
+| **Guillermo Chávez** | Corporate / VC | Backup persona |
 | **Marcus Chen** | Corporate / Founder | Slide example |
 | **Family Johnson** | Family with Minors | Triggers HUMAN_REQUIRED check-in (rule demo) |
 
