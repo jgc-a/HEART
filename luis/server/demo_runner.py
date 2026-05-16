@@ -16,7 +16,7 @@ if str(_ROOT) not in sys.path:
 
 from dotenv import load_dotenv
 
-load_dotenv(_HERE / ".env")
+load_dotenv(_HERE / ".env", override=True)
 
 from server.tools import arrival, dispute, handshake, in_stay, post_stay  # noqa: E402
 
