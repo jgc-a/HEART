@@ -15,7 +15,7 @@ MODULES = [
     {"id": "hapconsole", "label": "HAP Console",       "group": "Protocol",        "src": f"{LUIS_BASE}/hap-console",                      "source": "merged"},
     {"id": "reputation", "label": "Reputation Audit",  "group": "Protocol",        "src": f"{OPS_BASE}/ops?view=reputation&chrome=0",      "source": "ops"},
     {"id": "roigap",     "label": "Agent ROI",         "group": "Insights",        "src": f"{OPS_BASE}/ops?view=roigap&chrome=0",          "source": "ops"},
-    {"id": "install",    "label": "Install Plugin",    "group": "Setup",           "src": f"{LUIS_BASE}/install",                          "source": "luis"},
+    {"id": "install",    "label": "HAP Installation",  "group": "Setup",           "src": f"{LUIS_BASE}/install",                          "source": "luis"},
 ]
 
 @app.route("/")
