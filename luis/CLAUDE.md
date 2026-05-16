@@ -13,9 +13,43 @@ Building a demonstrable proof-of-concept for **HAP — Hospitality Agent Protoco
 
 - **Working directory:** `~/Documents/GitHub/HEART/luis/`
 - **Repo:** [`jgc-a/HEART`](https://github.com/jgc-a/HEART) (public, Guillermo's). Luis has push permission.
-- **Branch policy:** work directly on `main`. Changes only inside `luis/` subfolder. Guillermo owns repo root.
 - **Mirror (private backup, archived):** `luisvargasfdz/rosewood-hackathon-aisociety`. Not used anymore — all active work lives here.
 - **Second Brain:** `~/Documents/GitHub/Second-Brain/01_WIKI/proyectos/rosewood-hackathon-aisociety.md`
+
+### Git hygiene rules (STRICT — repo is shared with Guillermo)
+
+1. **All Luis changes go inside `luis/` subfolder.** Never touch root-level
+   files (`README.md`, `LICENSE`, `.gitignore` at root) or any other top-level
+   directory (`heart/`, `platform/`, etc).
+2. **Always stage with explicit paths**, never with `git add .` or `git add -A`:
+   ```bash
+   git add luis/server/foo.py luis/dashboard/components/Bar.tsx
+   ```
+3. **Always pull --rebase before push** in case Guillermo committed something
+   in parallel:
+   ```bash
+   git pull --rebase origin main && git push origin main
+   ```
+4. **Read `git status` before every commit** to confirm only `luis/*` paths are
+   staged. If anything outside `luis/` is staged by accident, unstage it:
+   ```bash
+   git restore --staged <path>
+   ```
+5. **Never force-push to `main`.** If a rebase conflict happens, resolve it
+   keeping Guillermo's root-level changes intact.
+6. **Branch policy:** work directly on `main` inside `luis/`. Don't open PRs
+   for Luis-only changes — they don't need review.
+
+### Verification (run periodically)
+
+```bash
+# Confirm no Luis commits ever touched files outside luis/:
+git log --name-only --author="luisvargasfdz" --pretty=format:"=== %h" | \
+  awk '/^===/ {c=$0; next} {if ($0!~/^luis\// && $0!="") print c"\n  ⚠️ "$0}'
+```
+
+If that command prints anything, an out-of-bounds change leaked through and
+must be reverted.
 
 ## Stack
 
