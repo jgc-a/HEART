@@ -52,14 +52,13 @@ export const guests: Guest[] = [
         "Welcome amenity: Stanford Sierra grove olive oil tasting",
       ],
       calendar: [
-        "Tue 10:00–11:30 · Andreessen Horowitz",
-        "Wed 14:00–16:00 · Sequoia Capital — Patio Sur reserved",
-        "Thu 09:30–11:00 · Founders Fund, Presidio SF",
-        "Fri pivot to Discovery mode · wine country Sat",
+        "Visit purpose: business travel, Sand Hill VC corridor.",
+        "Discovery mode pre-warmed for end-of-week (Filoli, wine country) if guest opts in.",
+        "Calendar specifics remain on the guest's device — never shared with the property.",
       ],
     },
     notes:
-      "Patio Sur on Wednesday is non-negotiable. Calm arrival with jazz, low light, and matcha. Optional health-context disclosure (chronic lower back) — guest may toggle at handshake.",
+      "Calm arrival with jazz, low light, and matcha. Optional health-context disclosure (chronic lower back) — guest may toggle at handshake. Itinerary remains the guest's domain.",
   },
   {
     id: "guillermo_aldana",
@@ -89,12 +88,13 @@ export const guests: Guest[] = [
         "Spanish for warmth, English for the brief",
       ],
       calendar: [
-        "Day 1 — Strategy session, Patio Norte (private), 09:00–16:00",
-        "Day 2 — Founder dinners off-property, car service confirmed",
+        "Visit purpose: two-day strategy offsite.",
+        "Off-property meetings declared (no specifics shared). Car service standing by.",
+        "Discretion in lobby. Minimal staff visibility requested.",
       ],
     },
     notes:
-      "Corporate flow. Minimal lobby presence preferred. Car service pre-coordinated for both off-property meetings.",
+      "Corporate flow. Minimal lobby presence preferred. Car service pre-coordinated. The guest sets the itinerary — we set the readiness.",
   },
   {
     id: "marcus_chen",
@@ -124,8 +124,9 @@ export const guests: Guest[] = [
         "Sense of Place — Filoli book on desk",
       ],
       calendar: [
-        "Mon evening · investor dinner, Madera",
-        "Tue all-day · partner meetings off-property",
+        "Visit purpose: founder offsite, Series B in active negotiation.",
+        "On-property dinners possible (no times shared). Tasting menu pacing set to slow.",
+        "Off-property obligations expected — discreetly accommodated, never inferred.",
       ],
     },
     notes:
@@ -159,8 +160,9 @@ export const guests: Guest[] = [
         "Sense of Place — local family experience pre-curated (Hidden Villa farm)",
       ],
       calendar: [
-        "Day 1 — Pool & welcome amenities · early dinner",
-        "Day 3 — Filoli Gardens family hike booked 10:00",
+        "Visit purpose: first international family trip in two years.",
+        "Family experiences pre-warmed (Filoli, Hidden Villa). Activated only on parental consent.",
+        "Daily schedule remains the family's — we stand by, never lead.",
       ],
     },
     humanCheckIn: true,

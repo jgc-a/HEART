@@ -115,7 +115,7 @@ export function GuestDrawer({
             <Section label="Room Prep" items={guest.preferences.lodging} />
             <Section label="Dietary" items={guest.preferences.dietary} />
             <Section label="Sense of Place" items={guest.preferences.cultural} />
-            <Section label="Calendar-Aware" items={guest.preferences.calendar} />
+            <Section label="Visit Context" items={guest.preferences.calendar} />
           </div>
 
           <div className="pt-6 hairline">

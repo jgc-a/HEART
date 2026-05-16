@@ -19,11 +19,11 @@ const sections: Section[] = [
     ],
   },
   {
-    label: "Calendar-Aware",
+    label: "Visit Context",
     items: [
-      "Wed 14:00–16:00 · Patio Sur reserved for guest's external meeting.",
-      "Thu evening · pivot to Discovery mode. Suggest Filoli Gardens.",
-      "Sat · wine country day, driver pre-confirmed.",
+      "Visit purpose: business travel. Sand Hill VC corridor.",
+      "Discovery mode available on request — Filoli, wine country are pre-warmed.",
+      "Calendar specifics remain on the guest's device. No reservation visibility.",
     ],
   },
   {
