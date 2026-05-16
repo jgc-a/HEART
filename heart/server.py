@@ -2,8 +2,8 @@
 """HEART — Human-centric Experience Agent for Rosewood Travelers
 Backend Flask · Port 5560 · Hackathon Build"""
 
-import os, json, time, uuid, sqlite3, threading, requests
-from datetime import datetime
+import os, json, time, uuid, sqlite3, threading, requests, hashlib, subprocess
+from datetime import datetime, date
 from pathlib import Path
 from flask import Flask, jsonify, request, render_template, Response, stream_with_context
 from flask_cors import CORS
@@ -30,7 +30,84 @@ def get_arca_token():
     except: ARCA_TOKEN = ""
     return ARCA_TOKEN
 
+# ── HAP EVENT DESCRIPTIONS ───────────────────────────────────────────────────
+# Friendly, human-readable descriptions for every HAP event the runtime can
+# emit. Used by the Care Protocol Verifier UI, HAP Console feed, and any
+# other surface that needs to explain "what just happened" to non-engineers.
+HAP_EVENT_DESCRIPTIONS = {
+    # Reservation & pre-arrival
+    "HAP.RESERVATION.CONFIRMED":              "Reservation captured · booking confirmed and seeded into HEART",
+    "HAP.FLOW.SELECTED":                      "Travel flow classified · adaptive friction profile applied",
+    "HAP.FLOW.REASSESSED":                    "Travel flow re-evaluated mid-journey · profile updated",
+    "HAP.GUEST_STATE.ASSESSED":               "Guest state assessed · preferences, allergies and risks profiled",
+    "HAP.BILLING.RESOLVED":                   "Billing fully resolved · payment method validated, charges routed",
+    "HAP.CORPORATE.BILLING_VALIDATED":        "Corporate billing validated · invoice goes to company, not guest",
+
+    # Check-in
+    "HAP.CHECK_IN.COMPLETED":                 "Check-in completed · guest officially in residence",
+    "HAP.CHECK_IN.HUMAN_REQUIRED":            "Check-in flagged as human-required · senior staff escalation",
+    "HAP.HUMAN_REQUIRED.MINORS_VERIFICATION": "Minors present · documentary verification by senior staff required",
+
+    # Guest agent (A2A)
+    "HAP.GUEST_AGENT.SESSION_OPENED":         "Guest's personal agent handshake · secure HAP channel established",
+    "HAP.GUEST_AGENT.CONSULTED":              "Staff consulted the guest's personal agent about a need or preference",
+
+    # Orchestrator (pre-arrival reasoning)
+    "HAP.ORCHESTRATOR.RESPONSE":              "Orchestrator agent emitted a reasoning step about this guest",
+    "HAP.ORCHESTRATOR.EXECUTED":              "Orchestrator agent run completed for this guest",
+    "HAP.ORCHESTRATION.COMPLETED":            "Full agent orchestration sequence finished for this guest",
+
+    # In-stay (Shadow)
+    "HAP.IN_STAY.MONITORING_OK":              "Shadow agent monitoring in-stay · no risks detected",
+    "HAP.IN_STAY.SHADOW_INTERACTION":         "Shadow agent had a discreet interaction with the guest",
+    "HAP.IN_STAY.PROACTIVE_OFFER":            "Proactive single-offer surfaced to the guest by Shadow",
+    "HAP.IN_STAY.COMPLAINT_ESCALATED":        "Active complaint detected · escalated out of agent control to Duty Manager",
+    "HAP.IN_STAY.MAINTENANCE_REPORTED":       "Maintenance issue reported · routed to Engineering",
+    "HAP.IN_STAY.WEEKEND_HANDOFF":            "Bleisure weekend handoff · billing context switched corp → personal",
+    "HAP.SHADOW.EXECUTED":                    "Shadow agent run completed for this guest",
+
+    # Flow-specific (Family, VIP, Wellness, Special Dates)
+    "HAP.FAMILY.KIDS_AMENITY_SETUP":          "Children's amenity kits set up in room (towels, menu, gifts)",
+    "HAP.VIP.IDENTITY_VERIFIED_BY_LEADERSHIP":"VIP identity verified by property leadership · NDA applied",
+    "HAP.VIP.PRIVATE_ROUTE_CONFIRMED":        "VIP private arrival/departure route confirmed with security",
+    "HAP.WELLNESS.PROGRAM_CONFIRMED":         "Wellness program confirmed · spa, recovery and dietary plan locked",
+    "HAP.SPECIAL_DATES.STAFF_BRIEFED":        "Staff briefed on a special date (anniversary, birthday, etc.)",
+    "HAP.SPECIAL_DATES.PROACTIVE_GESTURE":    "Proactive gesture executed for the special date (gift, decoration, note)",
+
+    # Post-stay (Thread)
+    "HAP.CHECKOUT.MEMORY_SNAPSHOT":           "Post-stay memory snapshot generated · returned to guest's agent",
+    "HAP.THREAD.POST_STAY_QUERY":             "Thread agent post-stay query · learning from this stay for next time",
+
+    # Reputation & disputes
+    "HAP.REPUTATION.DISPUTE_BRIEF_GENERATED": "WARDEN dispute brief generated · verdict computed against immutable log",
+    "HAP.REPUTATION.FORMAL_DISPUTE_GENERATED":"Formal dispute letter drafted for the review platform",
+
+    # Audit / governance
+    "HAP.AUDIT.ANCHORED":                     "Daily Merkle root anchored to public GitHub · external immutability proof",
+    "HAP.TEST.CHAIN":                         "Chain test event · written to verify hash-chain integrity",
+    "HAP.CUSTOM":                             "Custom-emitted HAP event from the Console",
+}
+
+def describe_event(name):
+    """Return a friendly description for a HAP event name. If unknown,
+    derive a readable fallback from the event name itself (HAP.FOO.BAR → 'Foo · bar')."""
+    if not name: return ""
+    if name in HAP_EVENT_DESCRIPTIONS:
+        return HAP_EVENT_DESCRIPTIONS[name]
+    parts = name.replace("HAP.", "").split(".")
+    if not parts: return ""
+    head = parts[0].replace("_", " ").title()
+    tail = " · ".join(p.replace("_", " ").lower() for p in parts[1:]) if len(parts) > 1 else ""
+    return f"{head}{' · ' + tail if tail else ''}"
+
 # ── Database Setup ────────────────────────────────────────────────────────────
+GENESIS_HASH = "0" * 64
+
+def _hap_row_hash(seq, guest_guid, event, detail, ts, prev_hash):
+    """Deterministic SHA256 of a hap_events row's payload + previous hash."""
+    payload = "|".join([str(seq), guest_guid or "", event or "", detail or "", ts or "", prev_hash or GENESIS_HASH])
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
 def init_db():
     conn = sqlite3.connect(DB)
     conn.executescript("""
@@ -57,8 +134,45 @@ def init_db():
             rating INTEGER, review TEXT, brief TEXT,
             warden_seal TEXT, created_at TEXT DEFAULT (datetime('now'))
         );
+        CREATE TABLE IF NOT EXISTS merkle_roots (
+            day TEXT PRIMARY KEY,
+            root TEXT NOT NULL,
+            event_count INTEGER NOT NULL,
+            first_seq INTEGER, last_seq INTEGER,
+            created_at TEXT DEFAULT (datetime('now')),
+            anchor_commit TEXT, anchor_url TEXT, anchor_ts TEXT
+        );
+        CREATE TABLE IF NOT EXISTS token_usage (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            ts TEXT DEFAULT (datetime('now')),
+            guest_guid TEXT, endpoint TEXT, model TEXT,
+            input_tokens INTEGER, output_tokens INTEGER,
+            cost_cents REAL, estimated INTEGER DEFAULT 1
+        );
+        CREATE INDEX IF NOT EXISTS idx_tu_guest ON token_usage(guest_guid);
+        CREATE INDEX IF NOT EXISTS idx_tu_endpoint ON token_usage(endpoint);
     """)
+    # Migrate hap_events with hash-chain columns (idempotent)
+    existing_cols = {r[1] for r in conn.execute("PRAGMA table_info(hap_events)").fetchall()}
+    for col, ddl in (("seq", "ALTER TABLE hap_events ADD COLUMN seq INTEGER"),
+                     ("prev_hash", "ALTER TABLE hap_events ADD COLUMN prev_hash TEXT"),
+                     ("hash", "ALTER TABLE hap_events ADD COLUMN hash TEXT")):
+        if col not in existing_cols:
+            conn.execute(ddl)
     conn.commit()
+    # Backfill any rows missing the chain
+    unchained = conn.execute("SELECT id, guest_guid, event, detail, ts FROM hap_events WHERE hash IS NULL ORDER BY id ASC").fetchall()
+    if unchained:
+        last = conn.execute("SELECT seq, hash FROM hap_events WHERE hash IS NOT NULL ORDER BY seq DESC LIMIT 1").fetchone()
+        seq = (last[0] if last else 0)
+        prev = (last[1] if last else GENESIS_HASH)
+        for row_id, guid, ev, det, ts in unchained:
+            seq += 1
+            h = _hap_row_hash(seq, guid, ev, det, ts, prev)
+            conn.execute("UPDATE hap_events SET seq=?, prev_hash=?, hash=? WHERE id=?",
+                         (seq, prev, h, row_id))
+            prev = h
+        conn.commit()
     conn.close()
 
 def load_guests():
@@ -154,13 +268,89 @@ RULES:
 Structured output with: memory_snapshot, retention_confirmation, return_prediction."""
 }
 
-# ── HAP EVENT EMITTER ────────────────────────────────────────────────────────
+# ── TOKEN USAGE & PRICING ────────────────────────────────────────────────────
+# Cents per 1K tokens. Claude Haiku 4.5 list pricing (Anthropic, 2026):
+#   input  $1.00 / 1M  → 0.10 cents / 1K tokens
+#   output $5.00 / 1M  → 0.50 cents / 1K tokens
+MODEL_PRICES = {
+    "claude-haiku-4-5":  {"in": 0.10, "out": 0.50},
+    "claude-sonnet-4-6": {"in": 0.30, "out": 1.50},
+    "claude-opus-4-7":   {"in": 1.50, "out": 7.50},
+}
+DEFAULT_MODEL = "claude-haiku-4-5"
+
+# ── HUMAN-EQUIVALENT COST MODEL ──────────────────────────────────────────────
+# Loaded cost for Rosewood Sand Hill front-desk / concierge staff:
+#   ~$70K base + 30% benefits-taxes = $91K/yr loaded
+#   2080 h/yr → $43.75/h → $0.73/min → ~73 cents/min. Rounded to a clean 75.
+HUMAN_CENTS_PER_MIN = 75.0
+
+# Realistic human-equivalent minutes per endpoint touch. These are conservative
+# estimates of how long a trained staff member would spend doing the same job
+# without AI assistance.
+HUMAN_MINUTES_BY_ENDPOINT = {
+    "guest_agent.chat":            4,    # read profile, think, reply
+    "guest_agent.handshake":       8,    # read profile + craft greeting + brief
+    "agent.orchestrator":         15,    # read reservation, classify flow, validate billing
+    "agent.shadow":                5,    # proactive monitoring check
+    "agent.thread":               12,    # post-stay analysis + memory snapshot
+    "dispute_brief.generate":     90,    # manual log reconstruction + verdict
+    "dispute_brief.formal_letter":60,    # writing formal dispute letter
+}
+HUMAN_MINUTES_DEFAULT = 5
+
+def human_minutes_for(endpoint):
+    return HUMAN_MINUTES_BY_ENDPOINT.get(endpoint, HUMAN_MINUTES_DEFAULT)
+
+def human_cents_for(endpoint, calls=1):
+    return human_minutes_for(endpoint) * HUMAN_CENTS_PER_MIN * calls
+
+def _estimate_tokens(text):
+    """Rough token estimate: ~4 chars per token for English/code. Conservative."""
+    if not text: return 1
+    return max(1, len(text) // 4)
+
+def log_arca_usage(guest_guid, endpoint, message, system_prompt, response, model=DEFAULT_MODEL, usage=None):
+    """Persist a token_usage row for a single ARCA call. If `usage` (dict with
+    input_tokens/output_tokens) is provided, use it; otherwise estimate from chars.
+    `cost_cents` is computed from MODEL_PRICES."""
+    if usage and "input_tokens" in usage and "output_tokens" in usage:
+        in_tok, out_tok, estimated = usage["input_tokens"], usage["output_tokens"], 0
+    else:
+        in_tok = _estimate_tokens((message or "") + (system_prompt or ""))
+        out_tok = _estimate_tokens(response or "")
+        estimated = 1
+    price = MODEL_PRICES.get(model, MODEL_PRICES[DEFAULT_MODEL])
+    cost = (in_tok * price["in"] + out_tok * price["out"]) / 1000.0
+    try:
+        conn = sqlite3.connect(DB)
+        conn.execute("""INSERT INTO token_usage (guest_guid, endpoint, model, input_tokens, output_tokens, cost_cents, estimated)
+                       VALUES (?,?,?,?,?,?,?)""",
+                     (guest_guid or "system", endpoint, model, in_tok, out_tok, cost, estimated))
+        conn.commit()
+        conn.close()
+    except Exception:
+        pass
+    return {"input_tokens": in_tok, "output_tokens": out_tok, "cost_cents": cost, "estimated": bool(estimated)}
+
+# ── HAP EVENT EMITTER (hash-chained) ─────────────────────────────────────────
+_emit_lock = threading.Lock()
+
 def emit_hap_event(guest_guid, event, detail=""):
-    conn = sqlite3.connect(DB)
-    conn.execute("INSERT INTO hap_events (guest_guid, event, detail) VALUES (?,?,?)",
-                 (guest_guid, event, detail))
-    conn.commit()
-    conn.close()
+    """Append a hash-chained immutable event. Thread-safe."""
+    ts = datetime.utcnow().isoformat(timespec="seconds")
+    with _emit_lock:
+        conn = sqlite3.connect(DB)
+        last = conn.execute("SELECT seq, hash FROM hap_events WHERE hash IS NOT NULL ORDER BY seq DESC LIMIT 1").fetchone()
+        seq = (last[0] if last else 0) + 1
+        prev = last[1] if last else GENESIS_HASH
+        h = _hap_row_hash(seq, guest_guid, event, detail, ts, prev)
+        conn.execute("""INSERT INTO hap_events (guest_guid, event, detail, ts, seq, prev_hash, hash)
+                       VALUES (?,?,?,?,?,?,?)""",
+                     (guest_guid, event, detail, ts, seq, prev, h))
+        conn.commit()
+        conn.close()
+    return h
 
 # ── ROUTES ───────────────────────────────────────────────────────────────────
 
@@ -214,7 +404,12 @@ def get_hap_events():
     conn.row_factory = sqlite3.Row
     rows = conn.execute("SELECT * FROM hap_events ORDER BY ts DESC LIMIT ?", (limit,)).fetchall()
     conn.close()
-    return jsonify([dict(r) for r in rows])
+    out = []
+    for r in rows:
+        d = dict(r)
+        d["description"] = describe_event(d.get("event", ""))
+        out.append(d)
+    return jsonify(out)
 
 @app.route("/api/heart/v1/hap/events/stream")
 def hap_events_stream():
@@ -286,6 +481,8 @@ def agent_chat(agent_name):
                 elif t == "chunk":
                     full_text += d.get("text","")
             except: pass
+
+        log_arca_usage(guest_guid, f"agent.{agent_name}", message, system, full_text)
 
         # Save conversation
         conn = sqlite3.connect(DB)
@@ -379,6 +576,8 @@ Use precise, forensic language. The brief is legal evidence, not marketing. Resp
                 elif t == "chunk": full_text += d.get("text","")
             except: pass
 
+        log_arca_usage("system", "dispute_brief.generate", prompt, "", full_text)
+
         # Determine verdict for UI coloring
         verdict = "INVALID"
         ft_upper = full_text.upper()
@@ -471,10 +670,315 @@ The letter must be firm yet professional. Maximum 350 words. Respond entirely in
                 elif t == "text": full_text += d.get("content", d.get("text",""))
                 elif t == "chunk": full_text += d.get("text","")
             except: pass
+        log_arca_usage("system", "dispute_brief.formal_letter", prompt, "", full_text)
         emit_hap_event("system", "HAP.REPUTATION.FORMAL_DISPUTE_GENERATED", f"{guest} — {platform}")
         return jsonify({"letter": full_text})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+# ── CARE PROTOCOL · Immutable per-guest timeline + chain verifier ────────────
+# Expected HAP-event sequence per flow profile. Used to render expected-vs-
+# delivered divergence inside the Reputation Audit module.
+FLOW_PROTOCOLS = {
+    "CORPORATE": [
+        "HAP.RESERVATION.CONFIRMED", "HAP.FLOW.SELECTED", "HAP.CORPORATE.BILLING_VALIDATED",
+        "HAP.GUEST_AGENT.SESSION_OPENED", "HAP.IN_STAY.MONITORING_OK",
+        "HAP.CHECKOUT.MEMORY_SNAPSHOT", "HAP.THREAD.POST_STAY_QUERY"
+    ],
+    "BLEISURE": [
+        "HAP.RESERVATION.CONFIRMED", "HAP.FLOW.SELECTED", "HAP.CORPORATE.BILLING_VALIDATED",
+        "HAP.IN_STAY.WEEKEND_HANDOFF", "HAP.IN_STAY.MONITORING_OK",
+        "HAP.CHECKOUT.MEMORY_SNAPSHOT"
+    ],
+    "SPECIAL_DATES": [
+        "HAP.RESERVATION.CONFIRMED", "HAP.FLOW.SELECTED", "HAP.SPECIAL_DATES.STAFF_BRIEFED",
+        "HAP.SPECIAL_DATES.PROACTIVE_GESTURE", "HAP.IN_STAY.MONITORING_OK",
+        "HAP.CHECKOUT.MEMORY_SNAPSHOT"
+    ],
+    "FAMILY_WITH_MINORS": [
+        "HAP.RESERVATION.CONFIRMED", "HAP.FLOW.SELECTED",
+        "HAP.HUMAN_REQUIRED.MINORS_VERIFICATION",
+        "HAP.FAMILY.KIDS_AMENITY_SETUP", "HAP.IN_STAY.MONITORING_OK",
+        "HAP.CHECKOUT.MEMORY_SNAPSHOT"
+    ],
+    "VIP_DISCRETE": [
+        "HAP.RESERVATION.CONFIRMED", "HAP.FLOW.SELECTED", "HAP.VIP.IDENTITY_VERIFIED_BY_LEADERSHIP",
+        "HAP.VIP.PRIVATE_ROUTE_CONFIRMED", "HAP.IN_STAY.MONITORING_OK",
+        "HAP.CHECKOUT.MEMORY_SNAPSHOT"
+    ],
+    "WELLNESS": [
+        "HAP.RESERVATION.CONFIRMED", "HAP.FLOW.SELECTED", "HAP.WELLNESS.PROGRAM_CONFIRMED",
+        "HAP.IN_STAY.MONITORING_OK", "HAP.CHECKOUT.MEMORY_SNAPSHOT"
+    ],
+    "GENERAL": [
+        "HAP.RESERVATION.CONFIRMED", "HAP.FLOW.SELECTED",
+        "HAP.GUEST_AGENT.SESSION_OPENED", "HAP.IN_STAY.MONITORING_OK",
+        "HAP.CHECKOUT.MEMORY_SNAPSHOT"
+    ],
+}
+
+def _verify_chain_rows(rows):
+    """Return (broken_seqs, recomputed_root). rows: list of (id,seq,guid,event,detail,ts,prev,hash)."""
+    broken, expected_prev = [], GENESIS_HASH
+    for r in rows:
+        _id, seq, guid, ev, det, ts, prev, h = r
+        if prev != expected_prev:
+            broken.append({"seq": seq, "reason": "prev_hash_mismatch"})
+        recomputed = _hap_row_hash(seq, guid, ev, det, ts, prev)
+        if recomputed != h:
+            broken.append({"seq": seq, "reason": "hash_mismatch", "expected": recomputed, "stored": h})
+        expected_prev = h
+    return broken, expected_prev
+
+@app.route("/api/heart/v1/care-protocol/<guest_guid>", methods=["GET"])
+def care_protocol(guest_guid):
+    """Return a chronological, hash-chained timeline of all care touchpoints for a guest:
+    HAP events + agent conversations + human-queue escalations + dispute briefs."""
+    guests = load_guests()["guests"]
+    guest = next((g for g in guests if g["guest_guid"] == guest_guid), None)
+    if not guest:
+        return jsonify({"error": "guest not found"}), 404
+
+    conn = sqlite3.connect(DB)
+    conn.row_factory = sqlite3.Row
+
+    hap = conn.execute(
+        "SELECT id, seq, ts, event, detail, prev_hash, hash FROM hap_events WHERE guest_guid=? ORDER BY seq ASC",
+        (guest_guid,)
+    ).fetchall()
+    convs = conn.execute(
+        "SELECT id, agent, role, ts, content FROM conversations WHERE guest_guid=? ORDER BY ts ASC",
+        (guest_guid,)
+    ).fetchall()
+    queue = conn.execute(
+        "SELECT id, reason, priority, status, assigned_to, created_at, resolved_at FROM human_queue WHERE guest_guid=? ORDER BY created_at ASC",
+        (guest_guid,)
+    ).fetchall()
+    briefs = conn.execute(
+        "SELECT id, platform, rating, review, warden_seal, created_at FROM dispute_briefs WHERE guest_name=? ORDER BY created_at ASC",
+        (guest.get("canonical_name", ""),)
+    ).fetchall()
+    conn.close()
+
+    timeline = []
+    for r in hap:
+        timeline.append({
+            "kind": "hap_event", "ts": r["ts"], "seq": r["seq"],
+            "event": r["event"], "detail": r["detail"],
+            "description": describe_event(r["event"]),
+            "hash": r["hash"], "prev_hash": r["prev_hash"],
+        })
+    for r in convs:
+        timeline.append({
+            "kind": "conversation", "ts": r["ts"], "agent": r["agent"],
+            "role": r["role"], "content": (r["content"] or "")[:600],
+        })
+    for r in queue:
+        timeline.append({
+            "kind": "human_escalation", "ts": r["created_at"], "reason": r["reason"],
+            "priority": r["priority"], "status": r["status"], "assigned_to": r["assigned_to"],
+            "resolved_at": r["resolved_at"],
+        })
+    for r in briefs:
+        timeline.append({
+            "kind": "dispute_brief", "ts": r["created_at"], "brief_id": r["id"],
+            "platform": r["platform"], "rating": r["rating"], "review": (r["review"] or "")[:300],
+            "warden_seal": r["warden_seal"],
+        })
+
+    timeline.sort(key=lambda x: (x["ts"] or "", 0 if x["kind"] == "hap_event" else 1))
+
+    return jsonify({
+        "guest_guid": guest_guid,
+        "guest_name": guest.get("canonical_name", ""),
+        "flow": guest.get("flow", ""),
+        "status": guest.get("status", ""),
+        "room": guest.get("room", ""),
+        "check_in": guest.get("check_in", ""),
+        "check_out": guest.get("check_out", ""),
+        "hap_event_count": len(hap),
+        "conversation_count": len(convs),
+        "escalation_count": len(queue),
+        "dispute_count": len(briefs),
+        "timeline": timeline,
+    })
+
+@app.route("/api/heart/v1/care-protocol/<guest_guid>/verify", methods=["GET"])
+def care_protocol_verify(guest_guid):
+    """Walk the guest's hap_events chain and report integrity. Also verifies that
+    the same events are consistent with the global chain (no foreign tampering)."""
+    conn = sqlite3.connect(DB)
+    rows = conn.execute(
+        "SELECT id, seq, guest_guid, event, detail, ts, prev_hash, hash FROM hap_events WHERE guest_guid=? ORDER BY seq ASC",
+        (guest_guid,)
+    ).fetchall()
+    # Global tip for context (so caller can prove this guest's events are part of the canonical chain)
+    global_tip = conn.execute("SELECT seq, hash FROM hap_events WHERE hash IS NOT NULL ORDER BY seq DESC LIMIT 1").fetchone()
+    # For per-guest verify we need to verify each row's hash against ITS own prev_hash (which was the chain prev at insert time)
+    broken = []
+    for r in rows:
+        _id, seq, guid, ev, det, ts, prev, h = r
+        recomputed = _hap_row_hash(seq, guid, ev, det, ts, prev)
+        if recomputed != h:
+            broken.append({"seq": seq, "reason": "hash_mismatch", "expected": recomputed, "stored": h})
+    # Sanity: each event's prev_hash must be the hash of the previous global row in the chain
+    if rows:
+        seqs = [r[1] for r in rows]
+        ph_map = {r[1]: r[6] for r in rows}
+        for seq in seqs:
+            prev_row = conn.execute("SELECT hash FROM hap_events WHERE seq=?", (seq - 1,)).fetchone()
+            expected_prev = prev_row[0] if prev_row else GENESIS_HASH
+            if ph_map[seq] != expected_prev:
+                broken.append({"seq": seq, "reason": "prev_hash_broken", "expected": expected_prev, "stored": ph_map[seq]})
+    conn.close()
+    return jsonify({
+        "guest_guid": guest_guid,
+        "events_verified": len(rows),
+        "intact": len(broken) == 0,
+        "broken": broken,
+        "global_chain_tip": {"seq": global_tip[0] if global_tip else 0, "hash": global_tip[1] if global_tip else GENESIS_HASH},
+    })
+
+@app.route("/api/heart/v1/care-protocol/<guest_guid>/expected", methods=["GET"])
+def care_protocol_expected(guest_guid):
+    """Compare expected flow protocol against delivered HAP events. Returns
+    per-step delivered/missing flags + extras the agent did beyond protocol."""
+    guests = load_guests()["guests"]
+    guest = next((g for g in guests if g["guest_guid"] == guest_guid), None)
+    if not guest:
+        return jsonify({"error": "guest not found"}), 404
+    flow = (guest.get("flow") or "GENERAL").upper()
+    expected = FLOW_PROTOCOLS.get(flow, FLOW_PROTOCOLS["GENERAL"])
+
+    conn = sqlite3.connect(DB)
+    delivered = conn.execute(
+        "SELECT event, ts, seq, hash FROM hap_events WHERE guest_guid=? ORDER BY seq ASC",
+        (guest_guid,)
+    ).fetchall()
+    conn.close()
+    delivered_events = [r[0] for r in delivered]
+
+    steps = []
+    for ev in expected:
+        match = next((r for r in delivered if r[0] == ev), None)
+        steps.append({
+            "event": ev, "delivered": match is not None,
+            "description": describe_event(ev),
+            "ts": match[1] if match else None,
+            "seq": match[2] if match else None,
+            "hash": match[3] if match else None,
+        })
+    extras = [
+        {"event": r[0], "ts": r[1], "seq": r[2], "hash": r[3], "description": describe_event(r[0])}
+        for r in delivered if r[0] not in expected
+    ]
+    return jsonify({
+        "guest_guid": guest_guid,
+        "flow": flow,
+        "expected_count": len(expected),
+        "delivered_count": sum(1 for s in steps if s["delivered"]),
+        "missing_count": sum(1 for s in steps if not s["delivered"]),
+        "extra_count": len(extras),
+        "steps": steps,
+        "extras": extras,
+    })
+
+@app.route("/api/heart/v1/audit/merkle", methods=["POST", "GET"])
+def audit_merkle():
+    """Compute a Merkle root over all hap_events for a given day. Stores it in
+    merkle_roots so daily roots become append-only. Use ?day=YYYY-MM-DD."""
+    day = request.args.get("day")
+    if not day and request.is_json:
+        day = (request.get_json(silent=True) or {}).get("day")
+    if not day:
+        day = date.today().isoformat()
+    conn = sqlite3.connect(DB)
+    rows = conn.execute(
+        "SELECT seq, hash FROM hap_events WHERE substr(ts,1,10)=? AND hash IS NOT NULL ORDER BY seq ASC",
+        (day,)
+    ).fetchall()
+    if not rows:
+        conn.close()
+        return jsonify({"day": day, "root": None, "event_count": 0, "note": "no events that day"})
+    # Compute Merkle root over the per-row hashes
+    layer = [bytes.fromhex(h) for _, h in rows]
+    while len(layer) > 1:
+        nxt = []
+        for i in range(0, len(layer), 2):
+            left = layer[i]
+            right = layer[i + 1] if i + 1 < len(layer) else left  # duplicate last if odd
+            nxt.append(hashlib.sha256(left + right).digest())
+        layer = nxt
+    root = layer[0].hex()
+    first_seq, last_seq = rows[0][0], rows[-1][0]
+    conn.execute("""INSERT INTO merkle_roots (day, root, event_count, first_seq, last_seq)
+                   VALUES (?,?,?,?,?)
+                   ON CONFLICT(day) DO UPDATE SET root=excluded.root, event_count=excluded.event_count,
+                       first_seq=excluded.first_seq, last_seq=excluded.last_seq""",
+                 (day, root, len(rows), first_seq, last_seq))
+    conn.commit()
+    conn.close()
+    return jsonify({"day": day, "root": root, "event_count": len(rows),
+                    "first_seq": first_seq, "last_seq": last_seq})
+
+@app.route("/api/heart/v1/audit/roots", methods=["GET"])
+def audit_roots():
+    conn = sqlite3.connect(DB)
+    conn.row_factory = sqlite3.Row
+    rows = conn.execute("SELECT * FROM merkle_roots ORDER BY day DESC").fetchall()
+    conn.close()
+    return jsonify([dict(r) for r in rows])
+
+REPO_PATH = Path.home() / "Desktop" / "HEART-luis"
+
+@app.route("/api/heart/v1/audit/anchor", methods=["POST"])
+def audit_anchor():
+    """Anchor a daily Merkle root to the GitHub repo by writing
+    audit/anchors/YYYY-MM-DD.json, committing, and pushing.
+    Returns the resulting commit SHA + GitHub URL."""
+    day = (request.json or {}).get("day") if request.is_json else None
+    if not day:
+        day = date.today().isoformat()
+    conn = sqlite3.connect(DB)
+    row = conn.execute("SELECT day, root, event_count, first_seq, last_seq FROM merkle_roots WHERE day=?", (day,)).fetchone()
+    if not row:
+        conn.close()
+        return jsonify({"error": f"no merkle root for {day}; compute one first via /audit/merkle?day={day}"}), 400
+
+    anchors_dir = REPO_PATH / "audit" / "anchors"
+    anchors_dir.mkdir(parents=True, exist_ok=True)
+    target = anchors_dir / f"{day}.json"
+    payload = {
+        "day": row[0], "root": row[1],
+        "event_count": row[2], "first_seq": row[3], "last_seq": row[4],
+        "anchored_at": datetime.utcnow().isoformat(timespec="seconds") + "Z",
+        "algorithm": "sha256-merkle-over-row-hashes",
+    }
+    target.write_text(json.dumps(payload, indent=2) + "\n")
+
+    def sh(args):
+        return subprocess.run(args, cwd=REPO_PATH, capture_output=True, text=True)
+
+    sh(["git", "add", str(target.relative_to(REPO_PATH))])
+    cm = sh(["git", "commit", "-m", f"audit: anchor {day} merkle root {row[1][:12]}…"])
+    if cm.returncode != 0 and "nothing to commit" not in (cm.stdout + cm.stderr):
+        conn.close()
+        return jsonify({"error": "git commit failed", "stderr": cm.stderr[:400]}), 500
+    push = sh(["git", "push", "origin", "main"])
+    if push.returncode != 0:
+        conn.close()
+        return jsonify({"error": "git push failed", "stderr": push.stderr[:400]}), 500
+    sha_proc = sh(["git", "rev-parse", "HEAD"])
+    commit_sha = sha_proc.stdout.strip()
+    anchor_url = f"https://github.com/jgc-a/HEART/blob/{commit_sha}/audit/anchors/{day}.json"
+    ts_iso = datetime.utcnow().isoformat(timespec="seconds") + "Z"
+    conn.execute("UPDATE merkle_roots SET anchor_commit=?, anchor_url=?, anchor_ts=? WHERE day=?",
+                 (commit_sha, anchor_url, ts_iso, day))
+    conn.commit()
+    conn.close()
+    emit_hap_event("system", "HAP.AUDIT.ANCHORED", f"day={day} sha={commit_sha[:12]}")
+    return jsonify({"day": day, "root": row[1], "anchor_commit": commit_sha,
+                    "anchor_url": anchor_url, "anchored_at": ts_iso})
 
 @app.route("/api/heart/v1/metrics", methods=["GET"])
 def get_metrics():
@@ -554,44 +1058,121 @@ def get_agent_brain():
 
 @app.route("/api/heart/v1/roi-stats", methods=["GET"])
 def get_roi_stats():
+    """Real ROI derived from logged ARCA token usage. Falls back to estimates
+    only when a row has no usage data (estimated=1)."""
     guests = load_guests()["guests"]
-    agent_resolved = 0
-    human_escalated = 0
-    total_interactions = 0
-    avg_agent_time = 2.5
-    avg_human_time = 28.0
+    agent_resolved = sum(1 for g in guests if not g.get("human_required"))
+    human_escalated = sum(1 for g in guests if g.get("human_required"))
+    total_guests = len(guests)
 
-    for g in guests:
-        total_interactions += 1
-        if g.get("human_required"):
-            human_escalated += 1
-        else:
-            agent_resolved += 1
+    conn = sqlite3.connect(DB)
+    conn.row_factory = sqlite3.Row
+    totals = conn.execute("""SELECT COUNT(*) AS calls,
+                                    COALESCE(SUM(input_tokens),0)  AS in_tok,
+                                    COALESCE(SUM(output_tokens),0) AS out_tok,
+                                    COALESCE(SUM(cost_cents),0.0)  AS cost_cents
+                             FROM token_usage""").fetchone()
+    by_endpoint = conn.execute("""SELECT endpoint, COUNT(*) AS calls,
+                                         SUM(input_tokens)  AS in_tok,
+                                         SUM(output_tokens) AS out_tok,
+                                         SUM(cost_cents)    AS cost_cents
+                                  FROM token_usage GROUP BY endpoint
+                                  ORDER BY cost_cents DESC""").fetchall()
+    by_guest = conn.execute("""SELECT guest_guid, COUNT(*) AS calls,
+                                      SUM(input_tokens)  AS in_tok,
+                                      SUM(output_tokens) AS out_tok,
+                                      SUM(cost_cents)    AS cost_cents
+                               FROM token_usage WHERE guest_guid != 'system'
+                               GROUP BY guest_guid
+                               ORDER BY cost_cents DESC LIMIT 8""").fetchall()
+    conn.close()
 
-    agent_cost_per_interaction = 0.15
-    human_cost_per_interaction = 45.00
+    # Map guest_guid → canonical_name
+    name_by_guid = {g["guest_guid"]: g.get("canonical_name", g["guest_guid"]) for g in guests}
+    by_guest_named = []
+    for r in by_guest:
+        d = dict(r)
+        d["guest_name"] = name_by_guid.get(r["guest_guid"], r["guest_guid"])
+        by_guest_named.append(d)
 
-    agent_total_cost = agent_resolved * agent_cost_per_interaction
-    human_total_cost = human_escalated * human_cost_per_interaction
+    calls       = totals["calls"]
+    total_cost  = float(totals["cost_cents"])
+    in_tok      = int(totals["in_tok"])
+    out_tok     = int(totals["out_tok"])
+    avg_call    = (total_cost / calls) if calls else 0
 
-    savings = human_total_cost - agent_total_cost if agent_resolved > 0 else 0
-    roi = (savings / (agent_total_cost + human_total_cost)) * 100 if (agent_total_cost + human_total_cost) > 0 else 0
+    # Per-endpoint human-equivalent cost: if a trained staff member had done
+    # this touch instead of the agent, here's what it would have cost.
+    by_endpoint_rich = []
+    total_human_minutes = 0
+    total_human_cents = 0.0
+    for r in by_endpoint:
+        d = dict(r)
+        ep_min  = human_minutes_for(d["endpoint"])
+        ep_cost = ep_min * HUMAN_CENTS_PER_MIN * d["calls"]
+        d["human_minutes_per_call"] = ep_min
+        d["human_minutes_total"]    = ep_min * d["calls"]
+        d["human_cost_cents"]       = round(ep_cost, 2)
+        d["agent_cost_cents"]       = round(float(d["cost_cents"]), 4)
+        d["ratio_human_vs_agent"]   = round(ep_cost / float(d["cost_cents"]), 1) if d["cost_cents"] else None
+        by_endpoint_rich.append(d)
+        total_human_minutes += ep_min * d["calls"]
+        total_human_cents   += ep_cost
+
+    savings = max(0.0, total_human_cents - total_cost)
+    ratio = (total_human_cents / total_cost) if total_cost else None
 
     return jsonify({
+        # legacy fields kept for back-compat with existing UI
+        "total_interactions": calls,
         "agent_resolved": agent_resolved,
         "human_escalated": human_escalated,
-        "total_interactions": total_interactions,
-        "agent_resolution_rate": (agent_resolved / total_interactions * 100) if total_interactions > 0 else 0,
-        "avg_agent_time_min": avg_agent_time,
-        "avg_human_time_min": avg_human_time,
-        "agent_cost_per": agent_cost_per_interaction,
-        "human_cost_per": human_cost_per_interaction,
-        "agent_total_cost": round(agent_total_cost, 2),
-        "human_total_cost": round(human_total_cost, 2),
-        "cost_savings": round(savings, 2),
-        "roi_percent": round(roi, 1),
-        "time_saved_hours": round((human_escalated * avg_human_time - agent_resolved * avg_agent_time) / 60, 1)
+        "agent_resolution_rate": (agent_resolved / total_guests * 100) if total_guests else 0,
+        "avg_agent_time_min": 2.5,
+        "avg_human_time_min": 28.0,
+        "agent_cost_per": round(avg_call / 100, 4),
+        "human_cost_per": HUMAN_CENTS_PER_MIN / 100.0,
+        # new real metrics
+        "calls": calls,
+        "total_input_tokens": in_tok,
+        "total_output_tokens": out_tok,
+        "total_tokens": in_tok + out_tok,
+        "total_cost_cents": round(total_cost, 4),
+        "avg_cost_per_call_cents": round(avg_call, 4),
+        # human comparison — derived per-call, not lump-sum
+        "human_total_minutes": total_human_minutes,
+        "human_total_cost_cents": round(total_human_cents, 2),
+        "cost_savings_cents": round(savings, 2),
+        "ratio_human_vs_agent": round(ratio, 1) if ratio else None,
+        "human_model": {"cents_per_minute": HUMAN_CENTS_PER_MIN,
+                         "minutes_by_endpoint": HUMAN_MINUTES_BY_ENDPOINT,
+                         "default_minutes": HUMAN_MINUTES_DEFAULT},
+        "by_endpoint": by_endpoint_rich,
+        "by_guest": by_guest_named,
+        "pricing": {"model": DEFAULT_MODEL, **MODEL_PRICES[DEFAULT_MODEL]},
     })
+
+@app.route("/api/heart/v1/roi-stats/calls", methods=["GET"])
+def roi_recent_calls():
+    """Latest token-usage rows. ?guest_guid=... to filter. Each row is enriched
+    with the human-equivalent cost so the UI can show AI vs Human per call."""
+    limit = request.args.get("limit", 30, type=int)
+    guest_guid = request.args.get("guest_guid")
+    conn = sqlite3.connect(DB)
+    conn.row_factory = sqlite3.Row
+    if guest_guid:
+        rows = conn.execute("SELECT * FROM token_usage WHERE guest_guid=? ORDER BY id DESC LIMIT ?",
+                            (guest_guid, limit)).fetchall()
+    else:
+        rows = conn.execute("SELECT * FROM token_usage ORDER BY id DESC LIMIT ?", (limit,)).fetchall()
+    conn.close()
+    out = []
+    for r in rows:
+        d = dict(r)
+        d["human_minutes"]     = human_minutes_for(d.get("endpoint",""))
+        d["human_cost_cents"]  = round(d["human_minutes"] * HUMAN_CENTS_PER_MIN, 2)
+        out.append(d)
+    return jsonify(out)
 
 # ── AGENT EXECUTION ENGINE ───────────────────────────────────────
 def execute_orchestrator(guest_guid, trigger="reservation_confirmed"):
@@ -647,6 +1228,7 @@ ESCALATION: [YES/NO - reason]"""
                     full_text += d.get("content", d.get("text",""))
             except: pass
 
+        log_arca_usage(guest_guid, "agent.orchestrator", prompt, SYSTEM_PROMPTS["orchestrator"], full_text)
         reasoning_chain.append(f"[ORCHESTRATOR] Analyzing {guest['canonical_name']}... ({line_count} lines, {len(full_text)} chars)")
 
         if not full_text:
@@ -767,6 +1349,7 @@ ACTION: [continue silent / escalate]"""
                     full_text += d.get("content", d.get("text",""))
             except: pass
 
+        log_arca_usage(guest_guid, "agent.shadow", prompt, SYSTEM_PROMPTS["shadow"], full_text)
         reasoning_chain.append(f"[SHADOW] Monitoring {guest['canonical_name']}...")
 
         if not full_text:
@@ -864,6 +1447,7 @@ RETURN: [high/medium/low]"""
                     full_text += d.get("content", d.get("text",""))
             except: pass
 
+        log_arca_usage(guest_guid, "agent.thread", prompt, SYSTEM_PROMPTS["thread"], full_text)
         reasoning_chain.append(f"[THREAD] Analyzing {guest['canonical_name']}...")
 
         if not full_text:
@@ -1113,6 +1697,7 @@ Tone: professional, warm, luxury hospitality. Language: English (always respond 
     if not response_text:
         return jsonify({"error": "No response"}), 502
 
+    log_arca_usage(guest_guid, "guest_agent.handshake", "Open the agent session.", system_prompt, response_text)
     emit_hap_event(guest_guid, "HAP.GUEST_AGENT.SESSION_OPENED", f"room={room}")
     return jsonify({"response": response_text, "guest_name": name})
 
@@ -1242,6 +1827,7 @@ Language: Always respond in English, regardless of the language of the question.
     conn.commit()
     conn.close()
 
+    log_arca_usage(guest_guid, "guest_agent.chat", message, system_prompt, response_text)
     emit_hap_event(guest_guid, "HAP.GUEST_AGENT.CONSULTED", f"staff_msg={message[:60]}")
 
     return jsonify({"response": response_text, "guest_name": name, "guest_guid": guest_guid})

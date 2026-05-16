@@ -146,11 +146,13 @@
     margin-bottom: 16px; padding-bottom: 12px;
     border-bottom: 1px solid rgba(255,255,255,.05);
   }
-  .hap-event-line { display: flex; gap: 12px; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,.03); align-items: baseline; }
-  .hap-ts   { color: #444; font-size: 10px; width: 140px; flex-shrink: 0; }
-  .hap-ev   { color: var(--gold-lt); font-weight: 600; font-size: 11px; }
-  .hap-guid { color: #444; font-size: 10px; }
-  .hap-det  { color: #666; font-size: 10px; }
+  .hap-event-line { display: grid; grid-template-columns: 140px 220px 1fr; gap: 12px; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,.04); align-items: baseline; }
+  .hap-ts   { color: #444; font-size: 10px; }
+  .hap-ev   { color: var(--gold-lt); font-weight: 600; font-size: 11px; font-family: 'SF Mono', monospace; }
+  .hap-desc { color: #aaa; font-size: 11px; line-height: 1.45; }
+  .hap-meta { color: #555; font-size: 10px; margin-top: 3px; }
+  .hap-guid { color: #555; font-size: 10px; }
+  .hap-det  { color: #777; font-size: 10px; }
 
   /* CHAT */
   .msg { display: flex; flex-direction: column; gap: 4px; }
@@ -175,6 +177,38 @@
   .queue-guest  { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 400; color: var(--text); }
   .queue-reason { font-size: 13px; color: #666; margin-top: 4px; }
   .queue-meta   { font-size: 10px; color: #bbb; margin-top: 6px; }
+
+  /* CARE PROTOCOL — Immutable per-guest verifier */
+  .protocol-card { background: var(--white); border: 1px solid var(--border); padding: 28px; margin-bottom: 16px; }
+  .protocol-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 18px; margin-bottom: 18px; flex-wrap: wrap; }
+  .protocol-stats { display: flex; gap: 28px; margin: 14px 0 20px; flex-wrap: wrap; }
+  .pstat { font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); }
+  .pstat b { display: block; font-family: 'Cormorant Garamond', serif; font-size: 24px; font-weight: 400; color: var(--text); }
+  .verifier-badge { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; font-weight: 500; }
+  .verifier-badge.intact { background: var(--green); color: white; }
+  .verifier-badge.broken { background: var(--red); color: white; }
+  .verifier-badge.pending { background: var(--paper2); color: var(--muted); }
+  .protocol-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 14px; }
+  .protocol-step { padding: 12px 14px; border-left: 2px solid var(--border); background: var(--paper); font-size: 12px; }
+  .protocol-step.delivered { border-left-color: var(--green); }
+  .protocol-step.missing   { border-left-color: var(--red); background: rgba(122,31,31,.04); }
+  .protocol-step.extra     { border-left-color: var(--gold); background: rgba(176,144,80,.05); }
+  .protocol-step .ev { font-family: 'SF Mono', monospace; font-size: 11px; color: var(--text); }
+  .protocol-step .meta { font-size: 9px; color: var(--muted); margin-top: 4px; letter-spacing: 1px; }
+  .hash-chip { font-family: 'SF Mono', monospace; font-size: 9.5px; color: var(--muted); background: var(--paper2); padding: 1px 6px; border-radius: 2px; letter-spacing: .5px; }
+  .timeline { display: flex; flex-direction: column; gap: 1px; background: var(--border); border: 1px solid var(--border); margin-top: 6px; max-height: 460px; overflow-y: auto; }
+  .timeline-row { background: var(--white); padding: 10px 14px; display: grid; grid-template-columns: 110px 130px 1fr auto; gap: 12px; align-items: baseline; font-size: 12px; }
+  .timeline-row.hap_event       { border-left: 2px solid var(--gold); }
+  .timeline-row.conversation    { border-left: 2px solid #4a90d9; }
+  .timeline-row.human_escalation{ border-left: 2px solid var(--red); }
+  .timeline-row.dispute_brief   { border-left: 2px solid var(--dark); }
+  .timeline-row .ts   { font-family: 'SF Mono', monospace; font-size: 10px; color: var(--muted); }
+  .timeline-row .kind { font-size: 9px; letter-spacing: 1.2px; text-transform: uppercase; color: var(--muted); }
+  .timeline-row .body { color: var(--text); line-height: 1.55; word-break: break-word; }
+  .merkle-bar { background: var(--black); color: #CCC; padding: 16px 20px; margin-top: 16px; display: flex; align-items: center; justify-content: space-between; gap: 18px; flex-wrap: wrap; }
+  .merkle-root { font-family: 'SF Mono', monospace; font-size: 11px; color: var(--gold-lt); word-break: break-all; }
+  .anchor-info { font-size: 10px; color: var(--muted); letter-spacing: 1px; }
+  .anchor-info a { color: var(--gold-lt); text-decoration: none; }
 
   /* DISPUTE */
   .dispute-card { background: var(--white); border: 1px solid var(--border); padding: 28px; }
@@ -342,6 +376,60 @@
       <div class="section-title">Reputation Audit</div>
       <div class="section-sub">Dispute briefs · WARDEN attestation · Immutable log reconstruction</div>
     </div>
+
+    <!-- ── CARE PROTOCOL VERIFIER ── Immutable per-guest timeline ──────── -->
+    <div class="protocol-card">
+      <div class="protocol-header">
+        <div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:400;">Care Protocol Verifier</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:3px;">Step-by-step reconstruction · hash-chained · anchorable to GitHub</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+          <select id="cp-guest-select" onchange="loadCareProtocol(this.value)"
+                  style="padding:8px 12px;border:1px solid var(--border);background:var(--paper);font-size:12px;font-family:'Inter',sans-serif;min-width:240px;">
+            <option value="">— Select a guest —</option>
+          </select>
+          <span id="cp-verifier-badge" class="verifier-badge pending">Awaiting selection</span>
+        </div>
+      </div>
+
+      <div id="cp-empty" style="font-size:13px;color:var(--muted);padding:18px 0;font-style:italic;">
+        Pick a guest to reconstruct their full care protocol — every HAP event, agent turn,
+        human escalation and dispute brief, in chronological order, each row sealed by SHA-256
+        chained to the previous one.
+      </div>
+
+      <div id="cp-body" style="display:none;">
+        <div class="protocol-stats">
+          <div class="pstat">HAP Events<b id="cp-stat-events">—</b></div>
+          <div class="pstat">Agent Turns<b id="cp-stat-convs">—</b></div>
+          <div class="pstat">Escalations<b id="cp-stat-escal">—</b></div>
+          <div class="pstat">Disputes<b id="cp-stat-disp">—</b></div>
+          <div class="pstat">Flow<b id="cp-stat-flow" style="font-family:'SF Mono',monospace;font-size:13px;letter-spacing:1px;">—</b></div>
+        </div>
+
+        <!-- Expected vs Delivered grid -->
+        <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-top:6px;">Expected protocol vs delivered</div>
+        <div id="cp-expected-grid" class="protocol-grid"></div>
+
+        <!-- Timeline -->
+        <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-top:22px;">Immutable timeline</div>
+        <div class="timeline" id="cp-timeline"></div>
+
+        <!-- Merkle root + anchor -->
+        <div class="merkle-bar">
+          <div>
+            <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#666;margin-bottom:6px;">Today's Merkle Root · SHA-256</div>
+            <div class="merkle-root" id="cp-merkle-root">computing…</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
+            <div class="anchor-info" id="cp-anchor-info">not yet anchored</div>
+            <button class="btn btn-gold" id="cp-anchor-btn" onclick="anchorMerkleRoot()">⬡ Anchor to GitHub</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="dispute-card">
       <div class="dispute-header">
         <div>
@@ -415,22 +503,70 @@
   <div id="view-roigap" class="view">
     <div>
       <div class="section-title">Agent ROI</div>
-      <div class="section-sub">Where HEART resolves issues · Where humans are still needed</div>
+      <div class="section-sub">Real Claude API token consumption · Cost in cents per call · Live</div>
     </div>
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border:1px solid var(--border);">
-      <div class="metric-card"><div class="metric-big" id="roi-total-matters">—</div><div class="metric-name">Total Matters</div></div>
-      <div class="metric-card"><div class="metric-big" style="color:var(--green);" id="roi-agent-resolved">—</div><div class="metric-name">Agent Resolved</div></div>
-      <div class="metric-card"><div class="metric-big" style="color:var(--red);" id="roi-human-required">—</div><div class="metric-name">Escalated to Human</div></div>
-      <div class="metric-card"><div class="metric-big" style="color:var(--gold);" id="roi-percentage">—</div><div class="metric-name">Agent Resolution Rate</div></div>
+
+    <!-- Top KPI strip -->
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);border:1px solid var(--border);">
+      <div class="metric-card"><div class="metric-big" id="roi-calls">—</div><div class="metric-name">API Calls</div></div>
+      <div class="metric-card"><div class="metric-big" id="roi-tokens">—</div><div class="metric-name">Total Tokens</div></div>
+      <div class="metric-card"><div class="metric-big" id="roi-avg-call">—</div><div class="metric-name">Avg AI Cost / Call</div></div>
     </div>
-    <div style="display:grid;grid-template-columns:2fr 1fr;gap:24px;">
+
+    <!-- AI vs Human comparison strip — the headline number -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:var(--border);border:1px solid var(--border);margin-top:1px;">
+      <div class="metric-card" style="background:var(--paper);">
+        <div class="metric-name" style="margin-bottom:6px;">Agent Cost</div>
+        <div class="metric-big" style="font-size:42px;color:var(--gold);" id="roi-cost">—</div>
+        <div style="font-size:10px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;margin-top:6px;">Real Claude API spend</div>
+        <div style="font-size:10px;color:#888;margin-top:4px;line-height:1.45;" id="roi-cost-formula">tokens × model price</div>
+      </div>
+      <div class="metric-card" style="background:var(--paper);">
+        <div class="metric-name" style="margin-bottom:6px;">Human Equivalent</div>
+        <div class="metric-big" style="font-size:42px;color:var(--red);" id="roi-human-cost">—</div>
+        <div style="font-size:10px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;margin-top:6px;" id="roi-human-minutes">— staff minutes</div>
+        <div style="font-size:10px;color:#888;margin-top:4px;line-height:1.45;" id="roi-human-formula">minutes × loaded staff rate</div>
+      </div>
+      <div class="metric-card" style="background:var(--paper);">
+        <div class="metric-name" style="margin-bottom:6px;">Net Savings</div>
+        <div class="metric-big" style="font-size:42px;color:var(--green);" id="roi-savings">—</div>
+        <div style="font-size:10px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;margin-top:6px;">If humans had done each touch</div>
+        <div style="font-size:10px;color:#888;margin-top:4px;line-height:1.45;" id="roi-savings-formula">human cost − agent cost</div>
+      </div>
+    </div>
+
+    <!-- Sub-strip: input/output split + agent vs human counts -->
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border:1px solid var(--border);margin-top:1px;">
+      <div class="metric-card" style="padding:18px 24px;"><div class="metric-big" style="font-size:30px;" id="roi-in-tokens">—</div><div class="metric-name">Input Tokens</div></div>
+      <div class="metric-card" style="padding:18px 24px;"><div class="metric-big" style="font-size:30px;" id="roi-out-tokens">—</div><div class="metric-name">Output Tokens</div></div>
+      <div class="metric-card" style="padding:18px 24px;"><div class="metric-big" style="font-size:30px;color:var(--green);" id="roi-agent-resolved">—</div><div class="metric-name">Agent Resolved</div></div>
+      <div class="metric-card" style="padding:18px 24px;"><div class="metric-big" style="font-size:30px;color:var(--red);" id="roi-human-required">—</div><div class="metric-name">Escalated to Human</div></div>
+    </div>
+
+    <!-- Pricing reminder -->
+    <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;padding:0 4px;">
+      <span id="roi-human-pricing-note">human staff cost: — ¢/min</span>
+      <span id="roi-pricing-note">—</span>
+    </div>
+
+    <!-- Breakdown: by endpoint, by guest -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
       <div>
-        <div class="section-title" style="font-size:20px;margin-bottom:12px;">Agent-Resolved</div>
-        <div style="display:flex;flex-direction:column;gap:1px;background:var(--border);border:1px solid var(--border);" id="roi-agent-list"><div class="loading">Loading…</div></div>
+        <div class="section-title" style="font-size:20px;margin-bottom:12px;">Cost by Endpoint</div>
+        <div style="display:flex;flex-direction:column;gap:1px;background:var(--border);border:1px solid var(--border);" id="roi-endpoint-list"><div class="loading">Loading…</div></div>
       </div>
       <div>
-        <div class="section-title" style="font-size:20px;margin-bottom:12px;">Escalated to Human</div>
-        <div style="display:flex;flex-direction:column;gap:1px;background:var(--border);border:1px solid var(--border);" id="roi-human-list"><div class="loading">Loading…</div></div>
+        <div class="section-title" style="font-size:20px;margin-bottom:12px;">Top Guests by Spend</div>
+        <div style="display:flex;flex-direction:column;gap:1px;background:var(--border);border:1px solid var(--border);" id="roi-guest-list"><div class="loading">Loading…</div></div>
+      </div>
+    </div>
+
+    <!-- Recent calls feed -->
+    <div>
+      <div class="section-title" style="font-size:20px;margin-bottom:8px;">Recent Calls · Live</div>
+      <div class="section-sub" style="margin-bottom:12px;">Most recent agent calls with per-call token + cents cost</div>
+      <div style="display:flex;flex-direction:column;gap:1px;background:var(--border);border:1px solid var(--border);max-height:280px;overflow-y:auto;" id="roi-recent-list">
+        <div class="loading">Loading…</div>
       </div>
     </div>
   </div>
@@ -522,9 +658,14 @@ async function loadHapEvents() {
   log.innerHTML = events.reverse().map(ev => `
     <div class="hap-event-line">
       <span class="hap-ts">${ev.ts?.replace('T',' ').slice(0,19)||''}</span>
-      <span class="hap-ev">${ev.event||''}</span>
-      <span class="hap-guid">${ev.guest_guid?.slice(0,20)||''}</span>
-      ${ev.detail ? '<span class="hap-det">→ '+ev.detail+'</span>' : ''}
+      <span class="hap-ev">${escapeHtml(ev.event||'')}</span>
+      <div>
+        <div class="hap-desc">${escapeHtml(ev.description||'')}</div>
+        <div class="hap-meta">
+          <span class="hap-guid">${(ev.guest_guid||'').slice(0,28)}</span>
+          ${ev.detail ? ' · <span class="hap-det">'+escapeHtml(ev.detail)+'</span>' : ''}
+        </div>
+      </div>
     </div>`).join('');
   log.scrollTop = log.scrollHeight;
 }
@@ -806,35 +947,249 @@ async function generateBrief() {
   finally { btn.disabled=false; btn.textContent='⬡ Debate complaint validity'; }
 }
 
-// ── Agent ROI ─────────────────────────────────────────────────────
-async function loadROI() {
-  const roi    = await (await fetch(API+'/api/heart/v1/roi-stats')).json();
-  const guests = await (await fetch(API+'/api/heart/v1/guests')).json();
-  const queue  = await (await fetch(API+'/api/heart/v1/human-queue')).json();
-  document.getElementById('roi-total-matters').textContent  = roi.total_interactions;
-  document.getElementById('roi-agent-resolved').textContent = roi.agent_resolved;
-  document.getElementById('roi-human-required').textContent = roi.human_escalated;
-  document.getElementById('roi-percentage').textContent     = Math.round(roi.agent_resolution_rate)+'%';
-  const agentList = guests.filter(g=>!g.human_required&&g.hap_events&&g.hap_events.length>0).slice(0,5).map(g=>`
-    <div style="background:var(--white);padding:16px 18px;border-left:2px solid var(--green);">
-      <div style="font-family:'Cormorant Garamond',serif;font-size:18px;">${g.canonical_name}</div>
-      <div style="font-size:11px;color:var(--muted);margin-top:4px;">${g.flow||'GENERAL'} · ${g.hap_events.length} HAP events</div>
-      <div style="font-size:10px;color:var(--green);margin-top:6px;">${roi.avg_agent_time_min}min · $${roi.agent_cost_per?.toFixed(2)}</div>
-    </div>`).join('');
-  const humanList = queue.filter(q=>q.status==='PENDING').slice(0,5).map(q=>`
-    <div style="background:var(--white);padding:16px 18px;border-left:2px solid var(--red);">
-      <div style="font-family:'Cormorant Garamond',serif;font-size:18px;">${q.guest_name}</div>
-      <div style="font-size:11px;color:var(--muted);margin-top:4px;">${q.reason?.slice(0,50)}</div>
-      <div style="font-size:10px;color:var(--red);margin-top:6px;">${roi.avg_human_time_min}min · $${roi.human_cost_per?.toFixed(2)}</div>
-    </div>`).join('');
-  document.getElementById('roi-agent-list').innerHTML = agentList||'<div class="loading">No agent-resolved matters</div>';
-  document.getElementById('roi-human-list').innerHTML = humanList||'<div class="loading">No escalations</div>';
+// ── Care Protocol Verifier ───────────────────────────────────────
+async function loadCareProtocolGuestList() {
+  try {
+    const guests = await (await fetch(API+'/api/heart/v1/guests')).json();
+    const sel = document.getElementById('cp-guest-select');
+    if (!sel) return;
+    sel.innerHTML = '<option value="">— Select a guest —</option>';
+    guests.forEach(g => {
+      sel.innerHTML += `<option value="${g.guest_guid}">${g.canonical_name} · ${g.flow||'GENERAL'} · ${g.status||''}</option>`;
+    });
+  } catch(e) {}
 }
+
+function escapeHtml(s){return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+
+function renderProtocolStep(step, kind) {
+  const sh = step.hash ? `<span class="hash-chip">${step.hash.slice(0,12)}</span>` : '';
+  const ts = step.ts ? `<div class="meta">${step.ts.replace('T',' ').slice(0,19)} · seq ${step.seq}</div>` : '<div class="meta">— not recorded —</div>';
+  const desc = step.description ? `<div style="font-size:11px;color:#555;line-height:1.4;margin-top:4px;">${escapeHtml(step.description)}</div>` : '';
+  return `<div class="protocol-step ${kind}">
+    <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;">
+      <div class="ev">${escapeHtml(step.event)}</div>${sh}
+    </div>${desc}${ts}
+  </div>`;
+}
+
+function renderTimelineRow(ev) {
+  const ts = (ev.ts || '').replace('T',' ').slice(0,19);
+  let body = '', extra = '';
+  if (ev.kind === 'hap_event') {
+    const desc = ev.description ? `<div style="color:#555;font-size:11px;margin-top:3px;line-height:1.4;">${escapeHtml(ev.description)}</div>` : '';
+    body = `<span style="font-family:'SF Mono',monospace;color:var(--gold);">${escapeHtml(ev.event)}</span>` +
+           (ev.detail ? ` <span style="color:#777;">— ${escapeHtml(ev.detail)}</span>` : '') + desc;
+    extra = `<span class="hash-chip">${ev.hash.slice(0,12)}</span>`;
+  } else if (ev.kind === 'conversation') {
+    body = `<b>${escapeHtml(ev.agent)}</b> <span style="color:#999;">[${escapeHtml(ev.role)}]</span> ${escapeHtml(ev.content)}`;
+  } else if (ev.kind === 'human_escalation') {
+    body = `<b style="color:var(--red);">ESCALATION</b> · ${escapeHtml(ev.reason)} · ${escapeHtml(ev.status)}` +
+           (ev.assigned_to ? ` · handled by ${escapeHtml(ev.assigned_to)}` : '');
+  } else if (ev.kind === 'dispute_brief') {
+    body = `<b>${escapeHtml(ev.platform)}</b> · ${ev.rating}★ · "${escapeHtml(ev.review||'')}"`;
+    extra = `<span class="hash-chip">${(ev.warden_seal||'').replace('WARDEN-SHA256-','').slice(0,12)}</span>`;
+  }
+  return `<div class="timeline-row ${ev.kind}">
+    <span class="ts">${ts}</span>
+    <span class="kind">${ev.kind.replace('_',' ')}</span>
+    <span class="body">${body}</span>
+    <span>${extra}</span>
+  </div>`;
+}
+
+async function loadCareProtocol(guid) {
+  if (!guid) {
+    document.getElementById('cp-body').style.display = 'none';
+    document.getElementById('cp-empty').style.display = '';
+    document.getElementById('cp-verifier-badge').className = 'verifier-badge pending';
+    document.getElementById('cp-verifier-badge').textContent = 'Awaiting selection';
+    return;
+  }
+  document.getElementById('cp-empty').style.display = 'none';
+  document.getElementById('cp-body').style.display = '';
+  const badge = document.getElementById('cp-verifier-badge');
+  badge.className = 'verifier-badge pending';
+  badge.textContent = 'Verifying chain…';
+
+  try {
+    const [proto, verify, expected] = await Promise.all([
+      fetch(`${API}/api/heart/v1/care-protocol/${guid}`).then(r=>r.json()),
+      fetch(`${API}/api/heart/v1/care-protocol/${guid}/verify`).then(r=>r.json()),
+      fetch(`${API}/api/heart/v1/care-protocol/${guid}/expected`).then(r=>r.json()),
+    ]);
+
+    document.getElementById('cp-stat-events').textContent = proto.hap_event_count;
+    document.getElementById('cp-stat-convs').textContent  = proto.conversation_count;
+    document.getElementById('cp-stat-escal').textContent  = proto.escalation_count;
+    document.getElementById('cp-stat-disp').textContent   = proto.dispute_count;
+    document.getElementById('cp-stat-flow').textContent   = proto.flow || 'GENERAL';
+
+    if (verify.intact) {
+      badge.className = 'verifier-badge intact';
+      badge.textContent = `✓ Chain intact · ${verify.events_verified} events`;
+    } else {
+      badge.className = 'verifier-badge broken';
+      badge.textContent = `✗ Broken · ${verify.broken.length} fault(s) at seq ${verify.broken.map(b=>b.seq).join(', ')}`;
+    }
+
+    // Expected vs delivered grid
+    const grid = document.getElementById('cp-expected-grid');
+    const stepHtml = expected.steps.map(s =>
+      renderProtocolStep(s, s.delivered ? 'delivered' : 'missing')
+    ).join('');
+    const extraHtml = (expected.extras||[]).slice(0,6).map(e => renderProtocolStep(e, 'extra')).join('');
+    grid.innerHTML = stepHtml + extraHtml +
+      (expected.extras.length > 6 ? `<div class="protocol-step extra" style="grid-column:1/-1;"><div class="ev">+ ${expected.extras.length-6} additional events beyond protocol</div></div>` : '');
+
+    // Timeline
+    const tl = document.getElementById('cp-timeline');
+    tl.innerHTML = (proto.timeline||[]).map(renderTimelineRow).join('') ||
+      '<div class="timeline-row"><span></span><span></span><span style="color:var(--muted);font-style:italic;">no recorded interactions</span><span></span></div>';
+
+    refreshMerkleRoot();
+  } catch (e) {
+    badge.className = 'verifier-badge broken';
+    badge.textContent = 'Verifier error';
+    console.error(e);
+  }
+}
+
+async function refreshMerkleRoot() {
+  try {
+    const day = new Date().toISOString().slice(0,10);
+    const r = await fetch(`${API}/api/heart/v1/audit/merkle?day=${day}`, {method:'POST'});
+    const d = await r.json();
+    document.getElementById('cp-merkle-root').textContent =
+      d.root ? `${d.root}` : '(no events today)';
+    const roots = await (await fetch(`${API}/api/heart/v1/audit/roots`)).json();
+    const today = roots.find(x => x.day === day);
+    const info  = document.getElementById('cp-anchor-info');
+    if (today && today.anchor_commit) {
+      info.innerHTML = `anchored at <a href="${today.anchor_url}" target="_blank">${today.anchor_commit.slice(0,7)}</a> · ${today.anchor_ts}`;
+    } else {
+      info.textContent = 'not yet anchored';
+    }
+  } catch(e){}
+}
+
+async function anchorMerkleRoot() {
+  const btn = document.getElementById('cp-anchor-btn');
+  const day = new Date().toISOString().slice(0,10);
+  btn.disabled = true; btn.textContent = 'Anchoring…';
+  try {
+    // make sure root is computed
+    await fetch(`${API}/api/heart/v1/audit/merkle?day=${day}`, {method:'POST'});
+    const r = await fetch(`${API}/api/heart/v1/audit/anchor`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({day})
+    });
+    const d = await r.json();
+    if (d.anchor_commit) {
+      document.getElementById('cp-anchor-info').innerHTML =
+        `anchored at <a href="${d.anchor_url}" target="_blank">${d.anchor_commit.slice(0,7)}</a> · ${d.anchored_at}`;
+    } else {
+      document.getElementById('cp-anchor-info').textContent = 'Anchor failed: ' + (d.error || 'unknown');
+    }
+  } catch (e) {
+    document.getElementById('cp-anchor-info').textContent = 'Anchor error: ' + e.message;
+  } finally {
+    btn.disabled = false; btn.textContent = '⬡ Anchor to GitHub';
+  }
+}
+
+// ── Agent ROI · real token consumption ──────────────────────────
+function fmtCents(c) {
+  if (c == null) return '—';
+  if (c < 1)    return c.toFixed(4) + '¢';
+  if (c < 100)  return c.toFixed(2) + '¢';
+  return '$' + (c/100).toFixed(2);
+}
+function fmtTokens(n) {
+  if (n == null) return '—';
+  if (n < 1000) return String(n);
+  if (n < 1e6)  return (n/1000).toFixed(1) + 'K';
+  return (n/1e6).toFixed(2) + 'M';
+}
+
+async function loadROI() {
+  try {
+    const roi    = await (await fetch(API+'/api/heart/v1/roi-stats')).json();
+    const recent = await (await fetch(API+'/api/heart/v1/roi-stats/calls?limit=20')).json();
+
+    document.getElementById('roi-calls').textContent       = roi.calls;
+    document.getElementById('roi-tokens').textContent      = fmtTokens(roi.total_tokens);
+    document.getElementById('roi-cost').textContent        = fmtCents(roi.total_cost_cents);
+    document.getElementById('roi-avg-call').textContent    = fmtCents(roi.avg_cost_per_call_cents);
+    document.getElementById('roi-savings').textContent     = fmtCents(roi.cost_savings_cents);
+    document.getElementById('roi-human-cost').textContent  = fmtCents(roi.human_total_cost_cents);
+    document.getElementById('roi-human-minutes').textContent =
+      `${roi.human_total_minutes} staff minute${roi.human_total_minutes===1?'':'s'}`;
+    document.getElementById('roi-in-tokens').textContent   = fmtTokens(roi.total_input_tokens);
+    document.getElementById('roi-out-tokens').textContent  = fmtTokens(roi.total_output_tokens);
+    document.getElementById('roi-agent-resolved').textContent = roi.agent_resolved;
+    document.getElementById('roi-human-required').textContent = roi.human_escalated;
+
+    // Friendly formula lines that explain how each headline number was derived
+    const inK  = (roi.total_input_tokens  / 1000).toFixed(1);
+    const outK = (roi.total_output_tokens / 1000).toFixed(1);
+    document.getElementById('roi-cost-formula').textContent =
+      `${inK}K input × ${roi.pricing.in.toFixed(2)}¢/1K  +  ${outK}K output × ${roi.pricing.out.toFixed(2)}¢/1K`;
+    document.getElementById('roi-human-formula').textContent =
+      `${roi.human_total_minutes} min × ${roi.human_model.cents_per_minute.toFixed(0)}¢/min  (loaded Rosewood staff rate, ~$45/h)`;
+    document.getElementById('roi-savings-formula').textContent =
+      `${fmtCents(roi.human_total_cost_cents)} human  −  ${fmtCents(roi.total_cost_cents)} agent`;
+
+    document.getElementById('roi-pricing-note').textContent =
+      `${roi.pricing.model} · in ${roi.pricing.in.toFixed(2)}¢/1K · out ${roi.pricing.out.toFixed(2)}¢/1K`;
+    document.getElementById('roi-human-pricing-note').textContent =
+      `human staff cost: ${roi.human_model.cents_per_minute.toFixed(0)}¢/min loaded`;
+
+    document.getElementById('roi-endpoint-list').innerHTML = (roi.by_endpoint||[]).map(e => `
+      <div style="background:var(--white);padding:14px 18px;display:grid;grid-template-columns:1.4fr 0.9fr 0.9fr 0.7fr;gap:14px;align-items:baseline;border-left:2px solid var(--gold);">
+        <div>
+          <div style="font-family:'SF Mono',monospace;font-size:12px;color:var(--text);">${e.endpoint}</div>
+          <div style="font-size:9px;color:var(--muted);letter-spacing:1px;margin-top:3px;">${e.calls} call${e.calls===1?'':'s'} · ${fmtTokens((e.in_tok||0)+(e.out_tok||0))} tok · ${e.human_minutes_per_call} staff-min/call</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:9px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;">Agent</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:18px;color:var(--gold);">${fmtCents(e.agent_cost_cents)}</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:9px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;">Human</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:18px;color:var(--red);">${fmtCents(e.human_cost_cents)}</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:9px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;">Ratio</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:18px;color:var(--green);">${e.ratio_human_vs_agent != null ? e.ratio_human_vs_agent.toLocaleString() + '×' : '—'}</div>
+        </div>
+      </div>`).join('') || '<div class="loading">No calls yet — chat with a guest agent to populate this</div>';
+
+    document.getElementById('roi-guest-list').innerHTML = (roi.by_guest||[]).map(g => `
+      <div style="background:var(--white);padding:14px 18px;display:grid;grid-template-columns:1fr auto auto;gap:14px;align-items:baseline;border-left:2px solid var(--green);">
+        <div style="font-family:'Cormorant Garamond',serif;font-size:16px;">${g.guest_name}</div>
+        <div style="font-size:10px;color:var(--muted);letter-spacing:1px;">${g.calls} · ${fmtTokens((g.in_tok||0)+(g.out_tok||0))} tok</div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:18px;color:var(--green);">${fmtCents(g.cost_cents)}</div>
+      </div>`).join('') || '<div class="loading">No per-guest spend recorded yet</div>';
+
+    document.getElementById('roi-recent-list').innerHTML = (recent||[]).map(r => `
+      <div style="background:var(--white);padding:10px 16px;display:grid;grid-template-columns:130px 1.4fr 0.5fr 0.5fr 0.7fr 0.7fr;gap:12px;align-items:baseline;font-size:11px;">
+        <span style="font-family:'SF Mono',monospace;font-size:10px;color:var(--muted);">${(r.ts||'').replace('T',' ').slice(0,19)}</span>
+        <span style="font-family:'SF Mono',monospace;color:var(--text);">${r.endpoint}</span>
+        <span style="font-size:9px;letter-spacing:1px;color:var(--muted);">in ${r.input_tokens}</span>
+        <span style="font-size:9px;letter-spacing:1px;color:var(--muted);">out ${r.output_tokens}</span>
+        <span style="font-family:'Cormorant Garamond',serif;font-size:14px;color:var(--gold);text-align:right;">A ${fmtCents(r.cost_cents)}</span>
+        <span style="font-family:'Cormorant Garamond',serif;font-size:14px;color:var(--red);text-align:right;">H ${fmtCents(r.human_cost_cents)}</span>
+      </div>`).join('') || '<div class="loading">No calls yet</div>';
+  } catch(e) { console.error(e); }
+}
+setInterval(loadROI, 8000);
 
 // ── Init ─────────────────────────────────────────────────────────
 loadROI();
 loadDeparting();
 loadAgentGuestList();
+loadCareProtocolGuestList();
 </script>
 </body>
 </html>

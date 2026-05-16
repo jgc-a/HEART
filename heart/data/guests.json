@@ -15,14 +15,35 @@
       "human_required": false,
       "upsell_enabled": true,
       "billing": "CORPORATE",
-      "tags": ["EXECUTIVE", "HIGH_VALUE", "REPEAT_GUEST"],
+      "tags": [
+        "EXECUTIVE",
+        "HIGH_VALUE",
+        "REPEAT_GUEST"
+      ],
       "rag_notes": "Prefers morning coffee at 6:30am. Allergic to shellfish. Suite 502 preferred (city view). No calls before 7am.",
       "hap_events": [
-        {"event": "HAP.RESERVATION.CONFIRMED", "ts": "2026-05-14T09:00:00"},
-        {"event": "HAP.GUEST_STATE.ASSESSED", "ts": "2026-05-14T09:01:00"},
-        {"event": "HAP.FLOW.SELECTED", "ts": "2026-05-14T09:01:30", "detail": "CORPORATE"},
-        {"event": "HAP.BILLING.RESOLVED", "ts": "2026-05-14T09:02:00", "detail": "Nexus Ventures CC"},
-        {"event": "HAP.CHECK_IN.COMPLETED", "ts": "2026-05-16T14:22:00"}
+        {
+          "event": "HAP.RESERVATION.CONFIRMED",
+          "ts": "2026-05-14T09:00:00"
+        },
+        {
+          "event": "HAP.GUEST_STATE.ASSESSED",
+          "ts": "2026-05-14T09:01:00"
+        },
+        {
+          "event": "HAP.FLOW.SELECTED",
+          "ts": "2026-05-14T09:01:30",
+          "detail": "CORPORATE"
+        },
+        {
+          "event": "HAP.BILLING.RESOLVED",
+          "ts": "2026-05-14T09:02:00",
+          "detail": "Nexus Ventures CC"
+        },
+        {
+          "event": "HAP.CHECK_IN.COMPLETED",
+          "ts": "2026-05-16T14:22:00"
+        }
       ]
     },
     {
@@ -36,15 +57,32 @@
       "occasion": "10th Wedding Anniversary",
       "loyalty_tier": "Rosewood Elite Gold",
       "bio": "10th anniversary. Surprise gesture pre-coordinated: champagne, rose petals, handwritten card. DO NOT mention by staff — surprise.",
-      "alerts": [{"type": "SURPRISE_GESTURE", "msg": "Champagne + roses in suite before arrival", "done": false}],
+      "alerts": [
+        {
+          "type": "SURPRISE_GESTURE",
+          "msg": "Champagne + roses in suite before arrival",
+          "done": false
+        }
+      ],
       "human_required": false,
       "upsell_enabled": true,
       "billing": "PERSONAL",
-      "tags": ["SPECIAL_DATES", "ANNIVERSARY", "HIGH_EMOTION"],
+      "tags": [
+        "SPECIAL_DATES",
+        "ANNIVERSARY",
+        "HIGH_EMOTION"
+      ],
       "rag_notes": "Michael is planning a surprise renewal vow. Coordinate with sommelier for vintage selection.",
       "hap_events": [
-        {"event": "HAP.RESERVATION.CONFIRMED", "ts": "2026-05-10T11:00:00"},
-        {"event": "HAP.FLOW.SELECTED", "ts": "2026-05-10T11:01:00", "detail": "SPECIAL_DATES/ANNIVERSARY"}
+        {
+          "event": "HAP.RESERVATION.CONFIRMED",
+          "ts": "2026-05-10T11:00:00"
+        },
+        {
+          "event": "HAP.FLOW.SELECTED",
+          "ts": "2026-05-10T11:01:00",
+          "detail": "SPECIAL_DATES/ANNIVERSARY"
+        }
       ]
     },
     {
@@ -55,19 +93,49 @@
       "room": "Family Suite 301",
       "check_in": "2026-05-16T15:00:00",
       "check_out": "2026-05-19T11:00:00",
-      "minors": [{"name": "Sofia Martinez", "age": 8}, {"name": "Lucas Martinez", "age": 5}],
+      "minors": [
+        {
+          "name": "Sofia Martinez",
+          "age": 8
+        },
+        {
+          "name": "Lucas Martinez",
+          "age": 5
+        }
+      ],
       "bio": "Exec + spouse + 2 kids. Pre-setup: kids amenity kits, children's menu, pool towels x4.",
-      "alerts": [{"type": "HUMAN_REQUIRED", "msg": "CHECK-IN WITH MINORS — Requires documentary verification by senior staff", "done": false, "priority": "HIGH"}],
+      "alerts": [
+        {
+          "type": "HUMAN_REQUIRED",
+          "msg": "CHECK-IN WITH MINORS — Requires documentary verification by senior staff",
+          "done": false,
+          "priority": "HIGH"
+        }
+      ],
       "human_required": true,
       "human_reason": "Minors present — mandatory documentary verification",
       "upsell_enabled": true,
       "billing": "PERSONAL",
-      "tags": ["FAMILY_WITH_MINORS", "HUMAN_REQUIRED"],
+      "tags": [
+        "FAMILY_WITH_MINORS",
+        "HUMAN_REQUIRED"
+      ],
       "rag_notes": "Lucas has mild nut allergy. Pool hours 7am-9pm. Kids club available 9am-6pm.",
       "hap_events": [
-        {"event": "HAP.RESERVATION.CONFIRMED", "ts": "2026-05-12T14:00:00"},
-        {"event": "HAP.FLOW.SELECTED", "ts": "2026-05-12T14:01:00", "detail": "FAMILY_WITH_MINORS"},
-        {"event": "HAP.CHECK_IN.HUMAN_REQUIRED", "ts": "2026-05-12T14:01:30", "detail": "Minors present"}
+        {
+          "event": "HAP.RESERVATION.CONFIRMED",
+          "ts": "2026-05-12T14:00:00"
+        },
+        {
+          "event": "HAP.FLOW.SELECTED",
+          "ts": "2026-05-12T14:01:00",
+          "detail": "FAMILY_WITH_MINORS"
+        },
+        {
+          "event": "HAP.CHECK_IN.HUMAN_REQUIRED",
+          "ts": "2026-05-12T14:01:30",
+          "detail": "Minors present"
+        }
       ]
     },
     {
@@ -84,12 +152,26 @@
       "upsell_enabled": true,
       "billing": "SPLIT",
       "billing_detail": "Mon-Fri: Goldman Sachs | Sat-Sun: Personal",
-      "tags": ["BLEISURE", "CORPORATE_WEEKDAY", "LEISURE_WEEKEND"],
+      "tags": [
+        "BLEISURE",
+        "CORPORATE_WEEKDAY",
+        "LEISURE_WEEKEND"
+      ],
       "rag_notes": "Partner arrives Sat 11am. Switch to leisure mode: wine tasting, Napa day trip. Book table at Madera for Saturday dinner.",
       "hap_events": [
-        {"event": "HAP.RESERVATION.CONFIRMED", "ts": "2026-05-13T10:00:00"},
-        {"event": "HAP.CHECK_IN.COMPLETED", "ts": "2026-05-14T13:15:00"},
-        {"event": "HAP.FLOW.REASSESSED", "ts": "2026-05-17T00:00:00", "detail": "CORPORATE → LEISURE pivot Saturday"}
+        {
+          "event": "HAP.RESERVATION.CONFIRMED",
+          "ts": "2026-05-13T10:00:00"
+        },
+        {
+          "event": "HAP.CHECK_IN.COMPLETED",
+          "ts": "2026-05-14T13:15:00"
+        },
+        {
+          "event": "HAP.FLOW.REASSESSED",
+          "ts": "2026-05-17T00:00:00",
+          "detail": "CORPORATE → LEISURE pivot Saturday"
+        }
       ]
     },
     {
@@ -102,19 +184,118 @@
       "check_out": "2026-05-17T11:00:00",
       "bio": "Business traveler. COMPLAINT ACTIVE: reported HVAC failure at 2:14am. Escalated to Engineering + Duty Manager.",
       "alerts": [
-        {"type": "COMPLAINT_ACTIVE", "msg": "HVAC failure — Escalated to Engineering (Ticket #ENG-2024) + Duty Manager Lopez", "done": false, "priority": "CRITICAL"},
-        {"type": "HUMAN_REQUIRED", "msg": "HEART on silent hold until complaint is closed by human", "done": false, "priority": "HIGH"}
+        {
+          "type": "COMPLAINT_ACTIVE",
+          "msg": "HVAC failure — Escalated to Engineering (Ticket #ENG-2024) + Duty Manager Lopez",
+          "done": false,
+          "priority": "CRITICAL"
+        },
+        {
+          "type": "HUMAN_REQUIRED",
+          "msg": "HEART on silent hold until complaint is closed by human",
+          "done": false,
+          "priority": "HIGH"
+        }
       ],
       "human_required": true,
       "human_reason": "Active complaint — HEART silent. Handling: Duty Manager Lopez",
       "complaint_detail": "HVAC unit making loud noise since 2am. Guest unable to sleep. Requested room change.",
       "upsell_enabled": false,
       "billing": "PERSONAL",
-      "tags": ["COMPLAINT_ACTIVE", "HUMAN_REQUIRED", "MAINTENANCE"],
+      "tags": [
+        "COMPLAINT_ACTIVE",
+        "HUMAN_REQUIRED",
+        "MAINTENANCE"
+      ],
       "hap_events": [
-        {"event": "HAP.CHECK_IN.COMPLETED", "ts": "2026-05-15T15:30:00"},
-        {"event": "HAP.IN_STAY.COMPLAINT_ESCALATED", "ts": "2026-05-16T02:14:00", "detail": "HVAC failure — Duty Manager + Engineering"},
-        {"event": "HAP.IN_STAY.MAINTENANCE_REPORTED", "ts": "2026-05-16T02:15:00", "detail": "HVAC Room 215 — Priority HIGH"}
+        {
+          "event": "HAP.CHECK_IN.COMPLETED",
+          "ts": "2026-05-15T15:30:00"
+        },
+        {
+          "event": "HAP.IN_STAY.COMPLAINT_ESCALATED",
+          "ts": "2026-05-16T02:14:00",
+          "detail": "HVAC failure — Duty Manager + Engineering"
+        },
+        {
+          "event": "HAP.IN_STAY.MAINTENANCE_REPORTED",
+          "ts": "2026-05-16T02:15:00",
+          "detail": "HVAC Room 215 — Priority HIGH"
+        }
+      ]
+    },
+    {
+      "guest_guid": "hap-guid-0006-luis-vargas",
+      "canonical_name": "Luis Vargas",
+      "flow": "BLEISURE",
+      "status": "ARRIVING_TODAY",
+      "room": "412",
+      "check_in": "2026-05-18T17:45:00",
+      "check_out": "2026-05-24T11:00:00",
+      "company": "AISociety · Sand Hill VC corridor",
+      "loyalty_tier": "Rosewood Elite Gold (RE-018F-LV)",
+      "bio": "Bleisure traveler · VC meetings on Sand Hill Mon-Wed, weekend extension to Filoli & wine country. Single traveler from Mexico City.",
+      "alerts": [],
+      "human_required": false,
+      "upsell_enabled": true,
+      "billing": "SPLIT",
+      "tags": [
+        "BLEISURE",
+        "CORPORATE_PRIMARY",
+        "ROSEWOOD_ELITE"
+      ],
+      "rag_notes": "Firm mattress · jazz at door · matcha 75C from Uji · no shellfish · bilingual ES/EN (formal EN for business, warm ES on arrival).",
+      "hap_events": [
+        {
+          "event": "HAP.RESERVATION.CONFIRMED",
+          "ts": "2026-05-12T09:00:00"
+        },
+        {
+          "event": "HAP.FLOW.SELECTED",
+          "ts": "2026-05-12T09:01:00",
+          "detail": "BLEISURE"
+        },
+        {
+          "event": "HAP.CORPORATE.BILLING_VALIDATED",
+          "ts": "2026-05-12T09:02:00"
+        }
+      ]
+    },
+    {
+      "guest_guid": "hap-guid-0007-guillermo-aldana",
+      "canonical_name": "Guillermo Chávez",
+      "flow": "CORPORATE",
+      "status": "ARRIVING_TODAY",
+      "room": "308",
+      "check_in": "2026-05-22T15:10:00",
+      "check_out": "2026-05-24T11:00:00",
+      "company": "B Drive IT",
+      "loyalty_tier": "Rosewood Elite Silver",
+      "bio": "Corporate · two-day strategy offsite. Pre-loaded corporate billing. Single traveler · EA booked. Executive desk + early espresso at 06:30.",
+      "alerts": [],
+      "human_required": false,
+      "upsell_enabled": true,
+      "billing": "CORPORATE",
+      "tags": [
+        "CORPORATE",
+        "EA_BOOKED",
+        "ROSEWOOD_ELITE"
+      ],
+      "rag_notes": "Pressing service standard · late check-out held · espresso 06:30 · filtered still water.",
+      "hap_events": [
+        {
+          "event": "HAP.RESERVATION.CONFIRMED",
+          "ts": "2026-05-14T11:00:00"
+        },
+        {
+          "event": "HAP.FLOW.SELECTED",
+          "ts": "2026-05-14T11:01:00",
+          "detail": "CORPORATE"
+        },
+        {
+          "event": "HAP.CORPORATE.BILLING_VALIDATED",
+          "ts": "2026-05-14T11:02:00"
+        }
       ]
     }
   ],
