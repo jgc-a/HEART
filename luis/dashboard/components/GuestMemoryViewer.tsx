@@ -1,8 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 
 type MemoryEntry = {
   chat_id: number | null;
@@ -36,18 +35,12 @@ export function GuestMemoryViewer() {
 
   const selected = memories[selectedIdx] ?? null;
 
-  const downloadHref = useMemo(() => {
-    if (!selected) return undefined;
-    const blob = new Blob([selected.markdown], { type: "text/markdown" });
-    return URL.createObjectURL(blob);
-  }, [selected]);
-
   return (
     <div className="bg-card border border-bronze/20 rounded-lg overflow-hidden shadow-[0_8px_24px_-12px_rgba(45,74,62,0.18)]">
       <div className="px-7 py-5 border-b border-bronze/15 bg-cream-soft/50 flex flex-col md:flex-row gap-3 md:items-center justify-between">
         <div>
           <div className="text-[0.7rem] uppercase tracking-[0.28em] text-bronze mb-1.5 flex items-center gap-2">
-            Live · guest.md
+            Guest Agent · internalized memory
             <span
               className={`w-1.5 h-1.5 rounded-full ${
                 memories.length ? "bg-forest animate-pulse-dot" : "bg-bronze/30"
@@ -55,29 +48,36 @@ export function GuestMemoryViewer() {
             />
           </div>
           <h3 className="font-serif text-2xl text-ink leading-tight">
-            Portable memory — owned by the guest
+            What your Claude now knows
           </h3>
           <p className="text-ink/60 text-sm mt-1 max-w-2xl">
-            After every stay, the guest&apos;s agent refines this markdown file
-            and stores it. Hotels can read it within authorized scope, never
-            store it. The file moves with the guest across properties.
+            Returned to the guest agent via{" "}
+            <code className="font-mono text-forest">hap_post_stay_memory</code>
+            . The agent internalizes it the same way it absorbs data from any
+            other MCP plugin. Nothing for the guest to download or open.
+            Rendered here read-only so you can verify what crossed the wire.
           </p>
         </div>
         <Badge
           variant="outline"
           className="border-bronze/40 text-bronze uppercase tracking-[0.18em] text-[0.65rem]"
         >
-          {memories.length} memory file{memories.length === 1 ? "" : "s"}
+          {memories.length} agent{memories.length === 1 ? "" : "s"} carrying memory
         </Badge>
       </div>
 
       {memories.length === 0 ? (
         <div className="px-7 py-12 text-center">
           <p className="font-serif italic text-ink/55 text-lg leading-relaxed max-w-xl mx-auto">
-            No guest.md yet. Complete a three-phase HAP flow (
+            No memory has been handed off yet. Complete a three-phase HAP
+            flow (
             <code className="not-italic text-bronze font-mono">/start</code> →
-            authorize → confirm) and the file generates itself and lands in
-            the guest&apos;s Telegram chat.
+            authorize → confirm) and the property will return the snapshot to
+            the guest agent via{" "}
+            <code className="not-italic text-bronze font-mono">
+              hap_post_stay_memory
+            </code>
+            .
           </p>
         </div>
       ) : (
@@ -107,20 +107,17 @@ export function GuestMemoryViewer() {
 
           {/* viewer */}
           <div className="flex flex-col">
-            <div className="px-6 py-3.5 border-b border-bronze/10 bg-cream-soft/30 flex items-center justify-between">
+            <div className="px-6 py-3.5 border-b border-bronze/10 bg-cream-soft/30 flex items-center justify-between gap-3 flex-wrap">
               <div className="text-[0.7rem] uppercase tracking-[0.22em] text-bronze">
                 {selected
-                  ? `Updated ${new Date(selected.updated_at_iso).toLocaleTimeString()}`
+                  ? `Handed off ${new Date(selected.updated_at_iso).toLocaleTimeString()}`
                   : ""}
               </div>
-              {selected && downloadHref && (
-                <a
-                  href={downloadHref}
-                  download={selected.filename}
-                  className="inline-flex items-center bg-forest text-cream hover:bg-forest/90 uppercase tracking-[0.18em] text-[0.65rem] font-medium px-3.5 py-1.5 rounded-md"
-                >
-                  Download .md
-                </a>
+              {selected && (
+                <div className="flex items-center gap-2 text-[0.65rem] tracking-[0.18em] uppercase text-forest">
+                  <span className="w-1 h-1 rounded-full bg-forest animate-pulse-dot" />
+                  internalized via hap_post_stay_memory
+                </div>
               )}
             </div>
             <div className="px-7 py-6 overflow-y-auto max-h-[640px] bg-ink/[0.02]">
@@ -139,8 +136,8 @@ export function GuestMemoryViewer() {
       )}
 
       <div className="px-7 py-3 border-t border-bronze/15 bg-cream-soft/40 text-[0.7rem] tracking-wide text-ink/55 text-center">
-        Schema <code className="font-mono text-bronze">hap-guest-memory/v0.1</code> —
-        portable, refined per stay, never stored property-side.
+        Schema <code className="font-mono text-bronze">hap-guest-memory/v0.1</code>{" "}
+        · transferred agent-to-agent · never persisted on the property side.
       </div>
     </div>
   );

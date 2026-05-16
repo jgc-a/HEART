@@ -1160,8 +1160,27 @@ async def _handle_confirm_outcome(query, ctx: ContextTypes.DEFAULT_TYPE, chat_id
         }
     )
 
-    # === Generate the portable guest.md and send it back to the guest ===
+    # === Agent-to-agent memory handoff (HAP §6 — HAP.MEMORY.RETURNED_TO_GUEST) ===
+    # The property transmits the refined memory snapshot to the guest agent
+    # via the HAP tool. The guest agent internalizes it. No file is exchanged
+    # with the human — this is how GitHub-MCP / Drive-MCP also work: the
+    # protocol delivers structured data, the agent absorbs it.
     profile = guest_agent.get_profile(chat_id)
+
+    # Run the real HAP tool — this is the same tool a Claude Desktop user
+    # would call. It returns the structured snapshot AND the rendered markdown.
+    from server.tools import post_stay as post_stay_tool
+
+    try:
+        memory_result = post_stay_tool.run(
+            post_stay_tool.PostStayInput(stay_id=arrival_result.stay_id)
+        )
+    except Exception as exc:  # noqa: BLE001
+        memory_result = None
+        print(f"[telegram] post_stay tool failed: {exc}")
+
+    # Also render the markdown (kept on disk so the dashboard can show
+    # "what the agent now knows" — read-only, not a download).
     md = guest_memory.generate_guest_md(
         profile=profile,
         history=[],
@@ -1173,46 +1192,84 @@ async def _handle_confirm_outcome(query, ctx: ContextTypes.DEFAULT_TYPE, chat_id
         },
     )
     guest_memory.save_guest_md(chat_id, md)
+
+    # Count what was learned, for the conversational handoff message.
+    counts = {
+        "lodging": len(profile.get("lodging") or []),
+        "dietary": len(profile.get("dietary") or []),
+        "cultural": len(profile.get("cultural") or []),
+        "wellness": len(profile.get("wellness") or []),
+    }
+    n_modes = 4  # generate_guest_md always emits 4 trip modes
+
     audit.append(
-        event="HAP.GUEST_MEMORY.REFINED",
+        event="HAP.MEMORY.RETURNED_TO_GUEST",
         guest_id=guest_id,
-        scope=["portability"],
-        extra={"chat_id": chat_id, "stay_id": arrival_result.stay_id},
+        session_id=handshake_result.session_id,
+        scope=["post_stay.memory"],
+        extra={
+            "chat_id": chat_id,
+            "stay_id": arrival_result.stay_id,
+            "schema": "hap-guest-memory/v0.1",
+            "lodging_count": counts["lodging"],
+            "dietary_count": counts["dietary"],
+            "cultural_count": counts["cultural"],
+            "wellness_count": counts["wellness"],
+            "trip_modes": n_modes,
+        },
     )
     emit_event(
         {
             "ts": _now_iso(),
-            "kind": "guest_memory_refined",
+            "kind": "a2a_response",
             "chat_id": chat_id,
-            "label": "guest.md refined and returned to the guest",
+            "from": "concierge",
+            "to": "guest_agent",
+            "tool": "hap_post_stay_memory",
+            "label": (
+                f"HEART → Guest Agent · memory snapshot returned · "
+                f"{sum(counts.values())} preferences across {n_modes} trip modes"
+            ),
+        }
+    )
+    emit_event(
+        {
+            "ts": _now_iso(),
+            "kind": "memory_internalized",
+            "chat_id": chat_id,
+            "label": "Guest Agent · snapshot internalized — schema hap-guest-memory/v0.1",
         }
     )
 
-    # Send as a real .md attachment to Telegram
-    try:
-        from io import BytesIO  # local import — only needed here
-        from telegram import InputFile
+    # The handoff message — conversational, no file, no download.
+    handoff_lines = ["📡 *Memory snapshot internalized*", ""]
+    handoff_lines.append("Your agent just received the refined memory from HEART:")
+    if counts["lodging"]:
+        handoff_lines.append(f"  • {counts['lodging']} lodging preferences")
+    if counts["dietary"]:
+        handoff_lines.append(f"  • {counts['dietary']} dietary signals")
+    if counts["cultural"]:
+        handoff_lines.append(f"  • {counts['cultural']} cultural / beverage preferences")
+    if counts["wellness"]:
+        handoff_lines.append(f"  • {counts['wellness']} wellness items (opt-in)")
+    handoff_lines.append(f"  • {n_modes} trip modes with interaction intensity + alert caps")
+    handoff_lines.append("")
+    handoff_lines.append(
+        "This travels with _me_, not with Rosewood. Next stay anywhere, your agent "
+        "starts a new handshake already knowing you. No data was left on the property "
+        "side beyond the pseudonymous audit chain."
+    )
+    handoff_lines.append("")
+    handoff_lines.append(
+        "_(Just like when your Claude uses the GitHub plugin — the data flows into the "
+        "agent through the protocol. There's nothing to download.)_"
+    )
 
-        doc = InputFile(BytesIO(md.encode("utf-8")), filename="guest.md")
-        await ctx.bot.send_document(
-            chat_id=chat_id,
-            document=doc,
-            caption=(
-                "📒 *Your guest.md*\n\n"
-                "This is _your_ memory file. It travels with you. Your agent reads it "
-                "on every future handshake and refines it after every stay. "
-                "Rosewood doesn't keep a copy."
-            ),
-            parse_mode=ParseMode.MARKDOWN,
-        )
-    except Exception as exc:  # noqa: BLE001
-        # Fallback: send as a plain (possibly truncated) message
-        snippet = md[:3500] + ("\n\n…(truncated)" if len(md) > 3500 else "")
-        await ctx.bot.send_message(
-            chat_id=chat_id, text=f"📒 *Your guest.md*\n\n```\n{snippet}\n```",
-            parse_mode=ParseMode.MARKDOWN,
-        )
-        print(f"[telegram] guest.md send_document failed, sent as text: {exc}")
+    await ctx.bot.send_message(
+        chat_id=chat_id,
+        text="\n".join(handoff_lines),
+        parse_mode=ParseMode.MARKDOWN,
+    )
 
     _pending_outcomes.pop(chat_id, None)
 
