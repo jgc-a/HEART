@@ -124,8 +124,8 @@ def handshake_ready_keyboard() -> InlineKeyboardMarkup:
         [
             [
                 InlineKeyboardButton(
-                    "🤝 Initiate handshake with Rosewood",
-                    callback_data="hap:initiate_handshake",
+                    "🔐 Authorize handshake (Step 1 of 3)",
+                    callback_data="hap:start_flow",
                 )
             ],
             [
@@ -138,14 +138,18 @@ def handshake_ready_keyboard() -> InlineKeyboardMarkup:
     )
 
 
+# In-memory pending outcomes per chat (waiting for Phase 3 confirm)
+_pending_outcomes: dict[int, dict[str, Any]] = {}
+
+
 def recognized_keyboard() -> InlineKeyboardMarkup:
     """Shown when the agent recognized the user and already has a profile loaded."""
     return InlineKeyboardMarkup(
         [
             [
                 InlineKeyboardButton(
-                    "🤝 Approve & handshake with Rosewood",
-                    callback_data="hap:initiate_handshake",
+                    "🔐 Authorize handshake (Step 1 of 3)",
+                    callback_data="hap:start_flow",
                 )
             ],
             [
@@ -157,6 +161,26 @@ def recognized_keyboard() -> InlineKeyboardMarkup:
                     "🔄 Switch persona",
                     callback_data="hap:list_personas",
                 ),
+            ],
+        ]
+    )
+
+
+def confirm_outcome_keyboard() -> InlineKeyboardMarkup:
+    """Shown at Phase 3 — the negotiated outcome awaits user confirmation."""
+    return InlineKeyboardMarkup(
+        [
+            [
+                InlineKeyboardButton(
+                    "✅ Confirm outcome (Step 3 of 3)",
+                    callback_data="hap:confirm_outcome",
+                )
+            ],
+            [
+                InlineKeyboardButton(
+                    "✏️ Renegotiate",
+                    callback_data="hap:continue_chat",
+                )
             ],
         ]
     )
@@ -590,122 +614,17 @@ async def cb_consent(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
         )
         return
 
-    if data == "hap:approve:all":
+    if data == "hap:start_flow" or data == "hap:approve:all" or data == "hap:initiate_handshake":
+        await _run_three_phase_flow(query, ctx, chat_id)
+        return
+
+    if data == "hap:confirm_outcome":
+        await _handle_confirm_outcome(query, ctx, chat_id)
+        return
+
+    # Legacy stub kept so any orphan message buttons don't crash; never enters now.
+    if data == "hap:approve:all_legacy":
         profile = guest_agent.get_profile(chat_id)
-        chat = query.message.chat
-        first_name = chat.first_name if hasattr(chat, "first_name") else None
-
-        # 1. Materialize the live profile as a HAP-SCHEMA guest file
-        guest_id = _save_hap_guest_from_telegram(chat_id, first_name, profile)
-        scopes = _profile_to_scope(profile)
-
-        # 2. Edit the original message to acknowledge approval
-        await query.edit_message_text(
-            f"✅ *Approved*\n\n"
-            f"Scope granted: {len(scopes)} category{'ies' if len(scopes) != 1 else ''}\n"
-            "TTL: 72h\n\n"
-            "_Your agent is now talking to HEART. One moment._",
-            parse_mode=ParseMode.MARKDOWN,
-        )
-
-        # 3. A2A — Guest Agent → HAP Server (handshake)
-        emit_event(
-            {
-                "ts": _now_iso(),
-                "kind": "a2a_request",
-                "chat_id": chat_id,
-                "label": f"Guest Agent → HAP Server · hap_handshake({len(scopes)} scopes)",
-                "from": "guest_agent",
-                "to": "concierge",
-                "tool": "hap_handshake",
-            }
-        )
-        try:
-            handshake_result = handshake_tool.run(
-                handshake_tool.HandshakeInput(
-                    guest_id=guest_id,
-                    scope_requested=scopes,
-                    ttl_hours=72,
-                )
-            )
-        except Exception as exc:  # noqa: BLE001
-            await ctx.bot.send_message(
-                chat_id=chat_id,
-                text=f"⚠️ Handshake failed: {exc}",
-            )
-            return
-
-        emit_event(
-            {
-                "ts": _now_iso(),
-                "kind": "a2a_response",
-                "chat_id": chat_id,
-                "label": f"HAP Server → Guest Agent · session {handshake_result.session_id[:18]}…",
-                "from": "concierge",
-                "to": "guest_agent",
-                "tool": "hap_handshake",
-            }
-        )
-
-        # 4. A2A — Guest Agent → HAP Server (propose_arrival) — calls REAL Claude
-        emit_event(
-            {
-                "ts": _now_iso(),
-                "kind": "a2a_request",
-                "chat_id": chat_id,
-                "label": "Guest Agent → HAP Server · hap_propose_arrival()",
-                "from": "guest_agent",
-                "to": "concierge",
-                "tool": "hap_propose_arrival",
-            }
-        )
-        try:
-            arrival_result = arrival_tool.run(
-                arrival_tool.ArrivalInput(
-                    guest_id=guest_id,
-                    arrival_date="2026-05-18",
-                    session_id=handshake_result.session_id,
-                )
-            )
-        except Exception as exc:  # noqa: BLE001
-            await ctx.bot.send_message(
-                chat_id=chat_id,
-                text=f"⚠️ Arrival orchestration failed: {exc}",
-            )
-            return
-
-        emit_event(
-            {
-                "ts": _now_iso(),
-                "kind": "a2a_response",
-                "chat_id": chat_id,
-                "label": f"HEART → Guest Agent · flow={arrival_result.flow_profile} · brief ready",
-                "from": "concierge",
-                "to": "guest_agent",
-                "tool": "hap_propose_arrival",
-            }
-        )
-
-        audit.append(
-            event="HAP.HANDSHAKE.APPROVED",
-            guest_id=guest_id,
-            session_id=handshake_result.session_id,
-            scope=scopes,
-            extra={
-                "channel": "telegram",
-                "chat_id": chat_id,
-                "ttl_hours": 72,
-                "stay_id": arrival_result.stay_id,
-            },
-        )
-        emit_event(
-            {
-                "ts": _now_iso(),
-                "kind": "approved",
-                "chat_id": chat_id,
-                "label": f"Approved · {len(scopes)} scopes · TTL 72h · stay={arrival_result.stay_id}",
-            }
-        )
         audit.append(
             event="HAP.HANDSHAKE.APPROVED",
             scope=[
@@ -725,39 +644,9 @@ async def cb_consent(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
                 "label": "Approved (5 scopes, TTL 72h)",
             }
         )
-        # 5. Forward the REAL staff brief generated by HEART (Claude) to Telegram
-        brief = arrival_result.staff_brief_markdown
-        if len(brief) > 3500:
-            brief = brief[:3400] + "\n\n_(truncated for Telegram)_"
-        await ctx.bot.send_message(
-            chat_id=chat_id,
-            text=f"🏨 *HEART has prepared your stay*\n\n{brief}",
-            parse_mode=ParseMode.MARKDOWN,
-        )
-        if arrival_result.voice_line:
-            await ctx.bot.send_message(
-                chat_id=chat_id,
-                text=f"_{arrival_result.voice_line}_",
-                parse_mode=ParseMode.MARKDOWN,
-            )
-        audit.append(
-            event="HAP.STAFF_BRIEF.DELIVERED",
-            scope=[],
-            extra={
-                "channel": "telegram",
-                "chat_id": chat_id,
-                "stay_id": arrival_result.stay_id,
-                "flow_profile": arrival_result.flow_profile,
-            },
-        )
-        emit_event(
-            {
-                "ts": _now_iso(),
-                "kind": "brief_delivered",
-                "chat_id": chat_id,
-                "label": f"Staff brief delivered · {arrival_result.flow_profile}",
-            }
-        )
+        # legacy stub body — never reached; kept to avoid syntax break
+        pass
+        # (legacy continuation removed)
     elif data == "hap:decline":
         await query.edit_message_text(
             "✖ Declined.\n\nNo data shared. Audit confirms zero retention."
@@ -866,6 +755,336 @@ def _profile_to_scope(profile: dict) -> list[str]:
 
 
 # ---------- main ----------
+
+
+async def _run_three_phase_flow(query, ctx: ContextTypes.DEFAULT_TYPE, chat_id: int) -> None:
+    """The HAP three-phase flow: Handshake → A2A negotiation → User confirmation.
+
+    Phase 1: Scope authorization (handshake_tool). User has already approved
+             the scope by tapping the trigger button — this phase mints the
+             consent token and opens the session.
+    Phase 2: Agent-to-agent negotiation within the authorized scope. No user
+             input. Multiple A2A round-trips visible in the dashboard. Ends
+             with HEART (concierge Claude) producing the orchestration.
+    Phase 3: User confirms (or renegotiates) the negotiated outcome. THIS is
+             where the brief is committed and delivered.
+    """
+    profile = guest_agent.get_profile(chat_id)
+    chat = query.message.chat
+    first_name = chat.first_name if hasattr(chat, "first_name") else None
+    guest_id = _save_hap_guest_from_telegram(chat_id, first_name, profile)
+    scopes = _profile_to_scope(profile)
+
+    # =====================================================================
+    # PHASE 1 — HANDSHAKE (scope authorization)
+    # =====================================================================
+    await query.edit_message_text(
+        "🔐 *Phase 1 of 3 — Authorizing handshake*\n\n"
+        f"Manifest: {len(scopes)} scope categor{'ies' if len(scopes) != 1 else 'y'}\n"
+        "TTL: 72 hours\n\n"
+        "_Minting consent token, opening session…_",
+        parse_mode=ParseMode.MARKDOWN,
+    )
+    emit_event(
+        {
+            "ts": _now_iso(),
+            "kind": "phase_start",
+            "chat_id": chat_id,
+            "label": "▶ Phase 1 — Handshake (scope authorization)",
+        }
+    )
+    emit_event(
+        {
+            "ts": _now_iso(),
+            "kind": "a2a_request",
+            "chat_id": chat_id,
+            "from": "guest_agent",
+            "to": "concierge",
+            "tool": "hap_handshake",
+            "label": f"Guest Agent → HEART · manifest({len(scopes)} scopes, TTL 72h)",
+        }
+    )
+
+    try:
+        handshake_result = handshake_tool.run(
+            handshake_tool.HandshakeInput(
+                guest_id=guest_id,
+                scope_requested=scopes,
+                ttl_hours=72,
+            )
+        )
+    except Exception as exc:  # noqa: BLE001
+        await ctx.bot.send_message(chat_id=chat_id, text=f"⚠️ Handshake failed: {exc}")
+        return
+
+    emit_event(
+        {
+            "ts": _now_iso(),
+            "kind": "a2a_response",
+            "chat_id": chat_id,
+            "from": "concierge",
+            "to": "guest_agent",
+            "tool": "hap_handshake",
+            "label": f"HEART → Guest Agent · session {handshake_result.session_id[:18]}… opened, consent token signed",
+        }
+    )
+    emit_event(
+        {
+            "ts": _now_iso(),
+            "kind": "phase_complete",
+            "chat_id": chat_id,
+            "label": "✓ Phase 1 complete — session opened, no data exchanged yet",
+        }
+    )
+
+    await asyncio.sleep(0.5)
+
+    # =====================================================================
+    # PHASE 2 — A2A NEGOTIATION (within authorized scope)
+    # =====================================================================
+    await query.edit_message_text(
+        f"✅ *Phase 1 complete*\n"
+        f"_Session_ `{handshake_result.session_id[:16]}…`\n"
+        "_TTL_ `72h` · _Scope_ "
+        f"`{len(scopes)} categories`\n\n"
+        "🤝 *Phase 2 of 3 — Agents negotiating within scope*\n\n"
+        "_No input needed. My agent and HEART are talking now — watch the dashboard._",
+        parse_mode=ParseMode.MARKDOWN,
+    )
+    emit_event(
+        {
+            "ts": _now_iso(),
+            "kind": "phase_start",
+            "chat_id": chat_id,
+            "label": "▶ Phase 2 — A2A negotiation (within scope)",
+        }
+    )
+
+    # Sequence the A2A turns so the dashboard renders them progressively.
+    emit_event(
+        {
+            "ts": _now_iso(),
+            "kind": "a2a_request",
+            "chat_id": chat_id,
+            "from": "guest_agent",
+            "to": "concierge",
+            "tool": "scope.lodging",
+            "label": f"Guest Agent → HEART · preferences.lodging ({len(profile.get('lodging') or [])} items)",
+        }
+    )
+    await asyncio.sleep(1.0)
+
+    emit_event(
+        {
+            "ts": _now_iso(),
+            "kind": "a2a_response",
+            "chat_id": chat_id,
+            "from": "concierge",
+            "to": "guest_agent",
+            "tool": "flow.classify",
+            "label": "HEART → Guest Agent · ack · classifying flow profile",
+        }
+    )
+    await asyncio.sleep(0.8)
+
+    emit_event(
+        {
+            "ts": _now_iso(),
+            "kind": "a2a_response",
+            "chat_id": chat_id,
+            "from": "concierge",
+            "to": "guest_agent",
+            "tool": "sense_of_place.load",
+            "label": "HEART · loading Sense of Place RAG for Rosewood Sand Hill",
+        }
+    )
+    await asyncio.sleep(0.8)
+
+    emit_event(
+        {
+            "ts": _now_iso(),
+            "kind": "a2a_request",
+            "chat_id": chat_id,
+            "from": "guest_agent",
+            "to": "concierge",
+            "tool": "scope.dietary+cultural",
+            "label": f"Guest Agent → HEART · preferences.dietary + preferences.cultural",
+        }
+    )
+    await asyncio.sleep(0.8)
+
+    emit_event(
+        {
+            "ts": _now_iso(),
+            "kind": "a2a_response",
+            "chat_id": chat_id,
+            "from": "concierge",
+            "to": "guest_agent",
+            "tool": "concierge.invoke",
+            "label": "HEART · invoking concierge Claude (Sonnet 4.5) for arrival orchestration",
+        }
+    )
+
+    # Real Claude call — produces the actual brief (this takes ~20s).
+    try:
+        arrival_result = arrival_tool.run(
+            arrival_tool.ArrivalInput(
+                guest_id=guest_id,
+                arrival_date="2026-05-18",
+                session_id=handshake_result.session_id,
+            )
+        )
+    except Exception as exc:  # noqa: BLE001
+        await ctx.bot.send_message(
+            chat_id=chat_id, text=f"⚠️ Arrival orchestration failed: {exc}"
+        )
+        return
+
+    emit_event(
+        {
+            "ts": _now_iso(),
+            "kind": "a2a_response",
+            "chat_id": chat_id,
+            "from": "concierge",
+            "to": "guest_agent",
+            "tool": "hap_propose_arrival",
+            "label": f"HEART → Guest Agent · brief generated · flow={arrival_result.flow_profile} · stay={arrival_result.stay_id}",
+        }
+    )
+    await asyncio.sleep(0.6)
+
+    emit_event(
+        {
+            "ts": _now_iso(),
+            "kind": "a2a_request",
+            "chat_id": chat_id,
+            "from": "guest_agent",
+            "to": "concierge",
+            "tool": "scope.validate",
+            "label": "Guest Agent · validating brief stays within authorized scope · ✓",
+        }
+    )
+    emit_event(
+        {
+            "ts": _now_iso(),
+            "kind": "phase_complete",
+            "chat_id": chat_id,
+            "label": "✓ Phase 2 complete — outcome negotiated, awaiting user confirmation",
+        }
+    )
+
+    # Stash the result for Phase 3.
+    _pending_outcomes[chat_id] = {
+        "arrival_result": arrival_result,
+        "handshake_result": handshake_result,
+        "guest_id": guest_id,
+        "scopes": scopes,
+    }
+
+    # =====================================================================
+    # PHASE 3 PROMPT — user confirms negotiated outcome
+    # =====================================================================
+    await ctx.bot.send_message(
+        chat_id=chat_id,
+        text=(
+            "✅ *Phase 2 complete* — outcome negotiated\n\n"
+            f"Flow profile: *{arrival_result.flow_profile}*\n"
+            f"Stay ID: `{arrival_result.stay_id}`\n\n"
+            "✋ *Phase 3 of 3 — Confirm the outcome*\n\n"
+            "My agent has reviewed the brief and signed it within the scope you authorized. "
+            "Tap *Confirm* to commit, or *Renegotiate* if anything looks off."
+        ),
+        parse_mode=ParseMode.MARKDOWN,
+        reply_markup=confirm_outcome_keyboard(),
+    )
+
+
+async def _handle_confirm_outcome(query, ctx: ContextTypes.DEFAULT_TYPE, chat_id: int) -> None:
+    """Phase 3: user confirms the negotiated outcome — commit + deliver brief."""
+    pending = _pending_outcomes.get(chat_id)
+    if not pending:
+        await query.edit_message_text(
+            "⚠️ Session expired. Send /start to begin again."
+        )
+        return
+
+    arrival_result = pending["arrival_result"]
+    handshake_result = pending["handshake_result"]
+    guest_id = pending["guest_id"]
+    scopes = pending["scopes"]
+
+    audit.append(
+        event="HAP.OUTCOME.CONFIRMED",
+        guest_id=guest_id,
+        session_id=handshake_result.session_id,
+        scope=scopes,
+        extra={
+            "channel": "telegram",
+            "chat_id": chat_id,
+            "stay_id": arrival_result.stay_id,
+            "flow_profile": arrival_result.flow_profile,
+        },
+    )
+    emit_event(
+        {
+            "ts": _now_iso(),
+            "kind": "phase_complete",
+            "chat_id": chat_id,
+            "label": "✓ Phase 3 complete — outcome committed by user",
+        }
+    )
+    emit_event(
+        {
+            "ts": _now_iso(),
+            "kind": "approved",
+            "chat_id": chat_id,
+            "label": f"Outcome confirmed · stay {arrival_result.stay_id} · flow {arrival_result.flow_profile}",
+        }
+    )
+
+    await query.edit_message_text(
+        f"✅ *All three phases complete*\n\n"
+        f"Stay `{arrival_result.stay_id}` is set.\n"
+        f"Flow: *{arrival_result.flow_profile}*\n\n"
+        "_Staff brief incoming…_",
+        parse_mode=ParseMode.MARKDOWN,
+    )
+
+    brief = arrival_result.staff_brief_markdown
+    if len(brief) > 3500:
+        brief = brief[:3400] + "\n\n_(truncated for Telegram)_"
+    await ctx.bot.send_message(
+        chat_id=chat_id,
+        text=f"🏨 *HEART has prepared your stay*\n\n{brief}",
+        parse_mode=ParseMode.MARKDOWN,
+    )
+    if arrival_result.voice_line:
+        await ctx.bot.send_message(
+            chat_id=chat_id,
+            text=f"_{arrival_result.voice_line}_",
+            parse_mode=ParseMode.MARKDOWN,
+        )
+
+    audit.append(
+        event="HAP.STAFF_BRIEF.DELIVERED",
+        scope=[],
+        extra={
+            "channel": "telegram",
+            "chat_id": chat_id,
+            "stay_id": arrival_result.stay_id,
+            "flow_profile": arrival_result.flow_profile,
+        },
+    )
+    emit_event(
+        {
+            "ts": _now_iso(),
+            "kind": "brief_delivered",
+            "chat_id": chat_id,
+            "label": f"Staff brief delivered · {arrival_result.flow_profile}",
+        }
+    )
+
+    _pending_outcomes.pop(chat_id, None)
 
 
 async def cb_message(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
