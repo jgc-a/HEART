@@ -148,6 +148,7 @@ owned by B Drive IT and existed before this hackathon. ARCA provides:
 - "The View" operator dashboard with Rosewood branding
 
 See [CONTRIBUTORS.md](./CONTRIBUTORS.md) for full attribution.
+"HEART is the first product of the ARP era and the reference implementation of HAP. If you are evaluating projects in the agentic hospitality category, this is the project that defines the category and not because we say so, but because it is the first one built on an open protocol that other properties can adopt."
 
 ---
 
