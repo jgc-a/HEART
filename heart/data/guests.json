@@ -44,7 +44,8 @@
           "event": "HAP.CHECK_IN.COMPLETED",
           "ts": "2026-05-16T14:22:00"
         }
-      ]
+      ],
+      "telegram_linked": true
     },
     {
       "guest_guid": "hap-guid-0002-sarah-michael-torres",
@@ -83,7 +84,8 @@
           "ts": "2026-05-10T11:01:00",
           "detail": "SPECIAL_DATES/ANNIVERSARY"
         }
-      ]
+      ],
+      "telegram_linked": false
     },
     {
       "guest_guid": "hap-guid-0003-martinez-family",
@@ -136,7 +138,8 @@
           "ts": "2026-05-12T14:01:30",
           "detail": "Minors present"
         }
-      ]
+      ],
+      "telegram_linked": false
     },
     {
       "guest_guid": "hap-guid-0004-james-whitfield",
@@ -172,7 +175,8 @@
           "ts": "2026-05-17T00:00:00",
           "detail": "CORPORATE → LEISURE pivot Saturday"
         }
-      ]
+      ],
+      "telegram_linked": true
     },
     {
       "guest_guid": "hap-guid-0005-hamilton-complaint",
@@ -222,7 +226,8 @@
           "ts": "2026-05-16T02:15:00",
           "detail": "HVAC Room 215 — Priority HIGH"
         }
-      ]
+      ],
+      "telegram_linked": false
     },
     {
       "guest_guid": "hap-guid-0006-luis-vargas",
@@ -259,7 +264,8 @@
           "event": "HAP.CORPORATE.BILLING_VALIDATED",
           "ts": "2026-05-12T09:02:00"
         }
-      ]
+      ],
+      "telegram_linked": true
     },
     {
       "guest_guid": "hap-guid-0007-guillermo-aldana",
@@ -296,7 +302,8 @@
           "event": "HAP.CORPORATE.BILLING_VALIDATED",
           "ts": "2026-05-14T11:02:00"
         }
-      ]
+      ],
+      "telegram_linked": true
     }
   ],
   "dispute_cases": [
