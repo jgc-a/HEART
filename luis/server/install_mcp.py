@@ -57,6 +57,29 @@ def _save_config(config: dict) -> None:
     CONFIG_PATH.write_text(json.dumps(config, indent=2), encoding="utf-8")
 
 
+def _read_dotenv() -> dict[str, str]:
+    """Read key=value pairs from server/.env if it exists.
+
+    Used to forward real credentials to Claude Desktop's config, since the
+    shell where `python install_mcp.py` runs typically doesn't have them
+    exported (and load_dotenv only affects the current process).
+    """
+    env_file = HERE / ".env"
+    result: dict[str, str] = {}
+    if not env_file.exists():
+        return result
+    for line in env_file.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        k, _, v = line.partition("=")
+        k = k.strip()
+        v = v.strip().strip('"').strip("'")
+        if k and v:
+            result[k] = v
+    return result
+
+
 def install() -> int:
     python = _venv_python()
     main_py = HERE / "main.py"
@@ -64,9 +87,20 @@ def install() -> int:
         print(f"❌ Can't find {main_py}")
         return 1
 
+    # Forward env vars to Claude Desktop. Prefer values from .env (they're the
+    # ones the user actually configured); fall back to the current shell.
+    dotenv_vars = _read_dotenv()
     env_extra: dict[str, str] = {}
-    for key in ("ANTHROPIC_API_KEY", "DEMO_MODE", "HAP_SIGNING_SECRET"):
-        v = os.environ.get(key)
+    for key in (
+        "ANTHROPIC_API_KEY",
+        "DEMO_MODE",
+        "HAP_SIGNING_SECRET",
+        "ELEVENLABS_API_KEY",
+        "ELEVENLABS_VOICE_ID",
+        "TELEGRAM_BOT_TOKEN",
+        "HAP_CLAUDE_MODEL",
+    ):
+        v = dotenv_vars.get(key) or os.environ.get(key)
         if v:
             env_extra[key] = v
 
@@ -84,7 +118,12 @@ def install() -> int:
     print(f"   Server:  {main_py}")
     print(f"   Python:  {python}")
     if env_extra:
-        print(f"   Env keys forwarded: {', '.join(env_extra.keys())}")
+        print(f"   Env keys forwarded ({len(env_extra)}):")
+        for k in env_extra.keys():
+            print(f"     · {k}")
+    else:
+        print("   ⚠️  No env vars forwarded. Create server/.env with at least")
+        print("       ANTHROPIC_API_KEY and HAP_SIGNING_SECRET, then re-run.")
     print()
     print("Now quit Claude Desktop (Cmd+Q, not just the window) and re-open it.")
     print("You should see 'hap-rosewood-sand-hill' listed under Settings → Developer.")
