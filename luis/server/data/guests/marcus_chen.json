@@ -1,0 +1,169 @@
+{
+  "guest_guid": "hap-guid-018f-marcus-003",
+  "canonical_name": "Marcus Chen",
+  "name_variants": ["Marcus Chen", "M. Chen"],
+  "flow_profile_hint": "corporate",
+  "arrival": {
+    "date": "2026-05-25",
+    "checkout_date": "2026-05-28",
+    "nights": 3,
+    "origin_city": "San Francisco",
+    "origin_iata": "SFO",
+    "destination_iata": "SFO",
+    "carrier": null,
+    "flight_number": null,
+    "lands_local": null,
+    "transport_to_property": "self_drive_tesla",
+    "estimated_arrival_at_property": "2026-05-25T15:30:00-07:00",
+    "party_size": 1,
+    "context": "Founder offsite at property — board prep + investor dinners. Local guest using property as a base.",
+    "luggage": {
+      "checked_bags": 1,
+      "carry_on": 1,
+      "fragile": false
+    }
+  },
+  "preferences": {
+    "lodging": {
+      "mattress": "medium_firm",
+      "pillows": { "firm": 2, "medium": 1 },
+      "lighting_bias": "neutral",
+      "lighting_scene_preset": "Workday",
+      "room_temperature_f": 67,
+      "room_temperature_c": 19,
+      "workspace": {
+        "standing_desk": true,
+        "monitor_requested": true,
+        "whiteboard": true,
+        "second_chair": false,
+        "no_fragrance_zone": true
+      },
+      "sound": {
+        "ambient_playlist": "ambient_electronic",
+        "volume": "off_by_default"
+      },
+      "blackout": "full",
+      "floor_preference": "high",
+      "view_preference": "hills"
+    },
+    "dietary": {
+      "restrictions": ["no_dairy"],
+      "allergies": [],
+      "preferences": ["plant_forward", "high_protein"],
+      "beverages": {
+        "coffee": "oat_milk_latte",
+        "oat_milk_brand": "Oatly_Barista",
+        "water_still": "Saratoga_still",
+        "water_sparkling": "Saratoga_sparkling",
+        "alcohol": "wine_only_red"
+      }
+    },
+    "cultural": {
+      "languages": ["en", "zh"],
+      "language_default": "en",
+      "register_business": "concise_executive",
+      "nationality": "US"
+    },
+    "wellness": {
+      "spa_interest": "none_this_trip",
+      "fitness": ["run_outdoors", "yoga_morning"],
+      "sleep": {
+        "target_hours": 6,
+        "white_noise": false
+      }
+    }
+  },
+  "calendar": {
+    "conflicts": [
+      {
+        "date": "2026-05-25",
+        "start": "19:00",
+        "end": "22:00",
+        "type": "investor_dinner",
+        "location": "Madera private dining room",
+        "party_size": 6,
+        "host_role": true,
+        "note": "Series B lead, Helios AI."
+      },
+      {
+        "date": "2026-05-26",
+        "start": "19:30",
+        "end": "22:30",
+        "type": "investor_dinner",
+        "location": "Madera private dining room",
+        "party_size": 4,
+        "host_role": true,
+        "note": "Second investor meeting, Helios AI."
+      },
+      {
+        "date": "2026-05-27",
+        "start": "08:00",
+        "end": "12:00",
+        "type": "board_prep",
+        "location": "Property boardroom",
+        "do_not_disturb": true
+      },
+      {
+        "date": "2026-05-27",
+        "start": "14:00",
+        "end": "17:00",
+        "type": "board_meeting",
+        "location": "Property boardroom",
+        "party_size": 8,
+        "do_not_disturb": true,
+        "av_required": ["projector", "polycom_speaker", "writing_pads"]
+      }
+    ]
+  },
+  "health": {
+    "context": null,
+    "opt_in": false
+  },
+  "family": {
+    "signals": null,
+    "opt_in": false
+  },
+  "billing": {
+    "method": "corporate",
+    "billing_entity": "Helios AI Inc.",
+    "billing_contact": "operations@heliosai.com",
+    "auth_token": "hap_billing_tok_corp_h8e1",
+    "incidentals_card": "Amex Centurion",
+    "pre_authorization_usd": 8000
+  },
+  "loyalty": {
+    "programs": [
+      {
+        "name": "Rosewood Elite",
+        "tier": "Platinum",
+        "member_id": "RE-018F-MC"
+      },
+      {
+        "name": "Amex Centurion",
+        "tier": "Black",
+        "perks": ["FHR_priority", "Centurion_concierge"]
+      },
+      {
+        "name": "Signature Travel Network",
+        "tier": "Member"
+      }
+    ]
+  },
+  "identity": {
+    "verified": true,
+    "method": "passport+nfc",
+    "passport_issuer": "US",
+    "biometric_enrolled": true
+  },
+  "consent_default_scope": [
+    "arrival.date_and_flight",
+    "preferences.lodging",
+    "preferences.dietary",
+    "calendar.conflicts",
+    "billing.method",
+    "loyalty.programs"
+  ],
+  "consent_optional_scope": [],
+  "default_ttl_hours": 96,
+  "notes_for_concierge": "Founder running Series B. Property is his offsite venue. Two investor dinners at Madera private room. Board meeting Wednesday afternoon — boardroom DND, AV pre-checked. No fragrance in suite. Oat milk for coffee."
+}

@@ -1,0 +1,453 @@
+{
+  "property_id": "rosewood-sand-hill",
+  "generated_at": "2026-05-16T08:00:00-07:00",
+  "currency": "USD",
+  "room_types": [
+    {
+      "id": "standard_king",
+      "name": "Standard King",
+      "category": "guestroom",
+      "size_sqft": 525,
+      "occupancy_max": 2,
+      "rate_from": 925,
+      "rate_peak": 1175,
+      "tier": "entry",
+      "features": ["king bed", "marble bath", "garden or hill view", "Apple TV", "Nespresso"]
+    },
+    {
+      "id": "garden_suite",
+      "name": "Garden Suite",
+      "category": "suite",
+      "size_sqft": 825,
+      "occupancy_max": 3,
+      "rate_from": 1450,
+      "rate_peak": 1750,
+      "tier": "premium",
+      "features": ["private garden patio", "standalone tub", "fireplace", "outdoor shower"]
+    },
+    {
+      "id": "sand_hill_suite",
+      "name": "Sand Hill Suite",
+      "category": "suite",
+      "size_sqft": 1100,
+      "occupancy_max": 4,
+      "rate_from": 2150,
+      "rate_peak": 2600,
+      "tier": "signature",
+      "features": ["separate living room", "workstation alcove", "fireplace", "soundproofed wall"]
+    },
+    {
+      "id": "penthouse",
+      "name": "The Penthouse",
+      "category": "penthouse",
+      "size_sqft": 2400,
+      "occupancy_max": 6,
+      "rate_from": 6500,
+      "rate_peak": 9500,
+      "tier": "ultra",
+      "features": ["wraparound terrace", "wood-burning fireplace", "private wine cellar", "two bedrooms", "butler-equipped"]
+    },
+    {
+      "id": "family_suite",
+      "name": "Family Suite (Connecting)",
+      "category": "suite",
+      "size_sqft": 1400,
+      "occupancy_max": 5,
+      "rate_from": 1850,
+      "rate_peak": 2300,
+      "tier": "premium",
+      "features": ["two connecting bedrooms", "kids welcome kit", "child-safe configuration", "outlet covers", "balcony lock"]
+    }
+  ],
+  "restaurants": [
+    {
+      "id": "madera_dining",
+      "name": "Madera (dinner)",
+      "category": "fine_dining",
+      "cuisine": "Northern California, hearthside",
+      "average_check_per_person": 195,
+      "tasting_menu_price": 245,
+      "wine_pairing_price": 165,
+      "private_room_available": true,
+      "private_room_capacity": 12,
+      "lead_time_hours": 24,
+      "dietary_accommodations": ["vegetarian_tasting", "no_shellfish", "no_dairy", "kids_menu"]
+    },
+    {
+      "id": "madera_breakfast",
+      "name": "Madera (breakfast)",
+      "category": "casual_dining",
+      "cuisine": "California breakfast",
+      "average_check_per_person": 55,
+      "kids_menu": true,
+      "lead_time_hours": 0
+    },
+    {
+      "id": "madera_bar",
+      "name": "Madera Bar",
+      "category": "lounge",
+      "cuisine": "Craft cocktails + small plates",
+      "average_check_per_person": 75,
+      "lead_time_hours": 0,
+      "minor_policy": "No alcohol service in zones where minors are present (HAP-FLOW 7)."
+    },
+    {
+      "id": "in_room_dining",
+      "name": "In-Room Dining",
+      "category": "in_room",
+      "cuisine": "Full menu from Madera + late-night",
+      "average_check_per_person": 95,
+      "lead_time_minutes": 35,
+      "kids_menu": true,
+      "hours": "24/7"
+    },
+    {
+      "id": "private_chef",
+      "name": "Private Chef in Suite",
+      "category": "experience",
+      "average_check_per_person": 350,
+      "min_party": 4,
+      "max_party": 12,
+      "lead_time_hours": 72
+    }
+  ],
+  "spa_treatments": [
+    {
+      "id": "spa_stanford_grove",
+      "name": "Stanford Grove Olive Oil Massage",
+      "duration_minutes": 90,
+      "price": 385,
+      "category": "signature",
+      "description": "Full-body massage with single-grove olive oil from the Stanford Sierra grove. Sense of Place anchor treatment.",
+      "tags": ["signature", "sense_of_place"]
+    },
+    {
+      "id": "spa_redwood_bathing",
+      "name": "Redwood Forest Bathing",
+      "duration_minutes": 60,
+      "price": 295,
+      "category": "wellness",
+      "description": "Guided forest bathing in the redwood grove on property, followed by aromatherapy steam and herbal tea.",
+      "tags": ["wellness", "outdoor", "restorative"]
+    },
+    {
+      "id": "spa_founders_recovery",
+      "name": "Founder's Recovery",
+      "duration_minutes": 120,
+      "price": 525,
+      "category": "executive",
+      "description": "Deep tissue massage focused on neck, shoulders, lower back. Cold plunge and infrared sauna access. For the long-haul knowledge worker.",
+      "tags": ["corporate", "back_pain", "deep_tissue"]
+    },
+    {
+      "id": "spa_bleisure_reset",
+      "name": "Bleisure Reset",
+      "duration_minutes": 75,
+      "price": 365,
+      "category": "transitional",
+      "description": "75 minutes designed to mark the Friday-to-weekend pivot. Aromatherapy, gentle stretch, and a 10-minute meditation.",
+      "tags": ["bleisure", "weekend", "transition"]
+    },
+    {
+      "id": "spa_couples_california",
+      "name": "California Together (couples)",
+      "duration_minutes": 90,
+      "price": 745,
+      "category": "couples",
+      "description": "Side-by-side massage in the couples suite with a fireplace and outdoor shower. Champagne afterward.",
+      "tags": ["couple", "anniversary", "milestone"]
+    },
+    {
+      "id": "spa_prenatal",
+      "name": "Prenatal Wellness",
+      "duration_minutes": 60,
+      "price": 285,
+      "category": "specialty",
+      "description": "Side-lying massage developed with a Bay Area midwifery group. Available second and third trimester.",
+      "tags": ["specialty", "wellness"]
+    },
+    {
+      "id": "spa_sleep_ritual",
+      "name": "Sleep Ritual",
+      "duration_minutes": 75,
+      "price": 345,
+      "category": "wellness",
+      "description": "Pre-bedtime aromatherapy, scalp massage, and guided breath work. Concierge then sets the suite to Evening Calm lighting.",
+      "tags": ["wellness", "sleep", "evening"]
+    },
+    {
+      "id": "spa_back_pain_clinic",
+      "name": "Back Pain Clinic",
+      "duration_minutes": 90,
+      "price": 425,
+      "category": "therapeutic",
+      "description": "Deep tissue and myofascial release for chronic lower back pain. Performed by a licensed clinical massage therapist.",
+      "tags": ["therapeutic", "back_pain", "deep_tissue"]
+    },
+    {
+      "id": "spa_facial_california",
+      "name": "California Glow Facial",
+      "duration_minutes": 75,
+      "price": 365,
+      "category": "facial",
+      "description": "Native California botanicals — yerba santa, manzanita, calendula. Suitable for sensitive skin.",
+      "tags": ["facial", "wellness"]
+    },
+    {
+      "id": "spa_post_flight",
+      "name": "Post-Flight Reset",
+      "duration_minutes": 45,
+      "price": 195,
+      "category": "express",
+      "description": "Lymphatic drainage and hydration treatment for jet-lagged guests. Available with priority booking.",
+      "tags": ["jet_lag", "express", "transit"]
+    }
+  ],
+  "local_experiences": [
+    {
+      "id": "exp_olive_oil_in_room",
+      "name": "Stanford Sierra Olive Oil Tasting",
+      "duration_minutes": 15,
+      "price_per_person_from": 0,
+      "max_party": 4,
+      "lead_time_hours": 2,
+      "delivery": "in_room",
+      "tags": ["welcome", "complimentary", "sense_of_place"]
+    },
+    {
+      "id": "exp_founders_hour",
+      "name": "Founder's Hour at Madera",
+      "duration_minutes": 120,
+      "price_per_person_from": 285,
+      "max_party": 6,
+      "lead_time_hours": 24,
+      "tags": ["dining", "founder", "investor"]
+    },
+    {
+      "id": "exp_sunrise_windy_hill",
+      "name": "Sunrise on Windy Hill",
+      "duration_minutes": 180,
+      "price_per_person_from": 95,
+      "max_party": 6,
+      "lead_time_hours": 12,
+      "tags": ["wellness", "outdoor", "breakfast"]
+    },
+    {
+      "id": "exp_sand_hill_walk",
+      "name": "Sand Hill Road Walk-and-Talk",
+      "duration_minutes": 90,
+      "price_per_person_from": 65,
+      "max_party": 4,
+      "lead_time_hours": 24,
+      "tags": ["founder", "history", "intellectual"]
+    },
+    {
+      "id": "exp_filoli_golden_hour",
+      "name": "Filoli at Golden Hour",
+      "duration_minutes": 150,
+      "price_per_person_from": 220,
+      "max_party": 8,
+      "lead_time_hours": 48,
+      "tags": ["leisure", "couple", "discovery"]
+    },
+    {
+      "id": "exp_fogarty_winery",
+      "name": "Fogarty Vineyard Tasting (Saratoga)",
+      "duration_minutes": 240,
+      "price_per_person_from": 325,
+      "max_party": 6,
+      "lead_time_hours": 48,
+      "tags": ["wine", "leisure", "weekend"]
+    },
+    {
+      "id": "exp_stanford_walk",
+      "name": "Stanford Campus Walk",
+      "duration_minutes": 90,
+      "price_per_person_from": 55,
+      "max_party": 6,
+      "lead_time_hours": 24,
+      "tags": ["intellectual", "family", "discovery"]
+    },
+    {
+      "id": "exp_hidden_villa",
+      "name": "Hidden Villa Family Hike",
+      "duration_minutes": 180,
+      "price_per_person_from": 75,
+      "max_party": 6,
+      "lead_time_hours": 24,
+      "tags": ["family", "outdoor", "kids"]
+    },
+    {
+      "id": "exp_patio_sur",
+      "name": "Patio Sur Private Reservation",
+      "duration_minutes": 120,
+      "price_per_person_from": 0,
+      "max_party": 8,
+      "lead_time_hours": 24,
+      "tags": ["corporate", "private", "patio"]
+    },
+    {
+      "id": "exp_midnight_madera",
+      "name": "Midnight at Madera",
+      "duration_minutes": 90,
+      "price_per_person_from": 145,
+      "max_party": 4,
+      "lead_time_hours": 24,
+      "tags": ["dining", "discovery", "late_night"]
+    },
+    {
+      "id": "exp_allied_arts_lunch",
+      "name": "Allied Arts Guild Garden Lunch",
+      "duration_minutes": 120,
+      "price_per_person_from": 95,
+      "max_party": 4,
+      "lead_time_hours": 24,
+      "tags": ["leisure", "intellectual", "discovery"]
+    }
+  ],
+  "transportation": [
+    {
+      "id": "transport_sfo_arrival",
+      "name": "SFO arrival car service (Mercedes EQS)",
+      "category": "airport_arrival",
+      "price_one_way": 285,
+      "lead_time_hours": 12,
+      "vehicle": "Mercedes EQS sedan",
+      "capacity": 3,
+      "estimated_drive_minutes": 30
+    },
+    {
+      "id": "transport_sjc_arrival",
+      "name": "SJC arrival car service (Mercedes EQS)",
+      "category": "airport_arrival",
+      "price_one_way": 245,
+      "lead_time_hours": 12,
+      "vehicle": "Mercedes EQS sedan",
+      "capacity": 3,
+      "estimated_drive_minutes": 22
+    },
+    {
+      "id": "transport_family_suv",
+      "name": "Family arrival SUV (party of 4+)",
+      "category": "airport_arrival",
+      "price_one_way": 365,
+      "lead_time_hours": 24,
+      "vehicle": "Cadillac Escalade",
+      "capacity": 6,
+      "child_seats_available": true
+    },
+    {
+      "id": "transport_helicopter_wine",
+      "name": "Helicopter to Napa wine country",
+      "category": "experience",
+      "price_per_trip": 4800,
+      "lead_time_hours": 48,
+      "departs_from": "Palo Alto Airport (5 minute drive)",
+      "duration_one_way_minutes": 22,
+      "capacity": 4
+    },
+    {
+      "id": "transport_house_car",
+      "name": "House car (intra-Valley)",
+      "category": "on_demand",
+      "price_per_hour": 145,
+      "lead_time_hours": 2,
+      "vehicle": "Tesla Model S",
+      "purpose": "Local Sand Hill Road, Stanford, Palo Alto trips"
+    },
+    {
+      "id": "transport_evening_uber_credit",
+      "name": "Evening Uber credit (light returns)",
+      "category": "on_demand",
+      "price": 75,
+      "lead_time_hours": 0,
+      "purpose": "Late-night returns for guests dining off-property"
+    }
+  ],
+  "concierge_services": [
+    {
+      "id": "service_florist",
+      "name": "Local florist coordination",
+      "category": "amenity",
+      "partner": "Bloom & Plume (Menlo Park)",
+      "price_from": 85,
+      "lead_time_hours": 4,
+      "use_cases": ["welcome amenity", "anniversary", "in-suite installation"]
+    },
+    {
+      "id": "service_sommelier_curation",
+      "name": "Sommelier wine curation",
+      "category": "f_and_b",
+      "price_from": 250,
+      "lead_time_hours": 24,
+      "description": "In-room wine selection chosen by Madera's sommelier to match guest profile."
+    },
+    {
+      "id": "service_private_chef",
+      "name": "Private chef in suite",
+      "category": "f_and_b",
+      "price_per_person_from": 350,
+      "min_party": 4,
+      "max_party": 12,
+      "lead_time_hours": 72
+    },
+    {
+      "id": "service_photographer",
+      "name": "On-property photographer",
+      "category": "experience",
+      "price_per_hour": 285,
+      "lead_time_hours": 48,
+      "use_cases": ["proposal", "anniversary", "family portrait", "founder headshots"]
+    },
+    {
+      "id": "service_personal_shopper",
+      "name": "Personal shopper (Stanford Shopping Center)",
+      "category": "leisure",
+      "price_per_hour": 195,
+      "lead_time_hours": 12
+    },
+    {
+      "id": "service_pet_concierge",
+      "name": "Pet concierge",
+      "category": "amenity",
+      "price_per_stay": 150,
+      "lead_time_hours": 12,
+      "description": "Walking, feeding, and bedding for guest's pet in designated pet-friendly rooms."
+    },
+    {
+      "id": "service_kids_club",
+      "name": "Kids Club (supervised)",
+      "category": "family",
+      "price_per_hour_per_child": 75,
+      "lead_time_hours": 12,
+      "ages": "4-12",
+      "consent_form_required": true
+    },
+    {
+      "id": "service_boardroom",
+      "name": "Property boardroom rental",
+      "category": "corporate",
+      "price_per_half_day": 850,
+      "price_per_full_day": 1450,
+      "lead_time_hours": 24,
+      "av_included": ["projector", "polycom_speaker", "writing_pads"],
+      "capacity": 10
+    },
+    {
+      "id": "service_pressing",
+      "name": "Pressing and laundry express",
+      "category": "essential",
+      "price_per_item_from": 18,
+      "turnaround_hours": 4
+    },
+    {
+      "id": "service_florist_funeral",
+      "name": "Bereavement floral arrangement",
+      "category": "compassionate",
+      "price_from": 145,
+      "lead_time_hours": 6,
+      "description": "Discreet arrangement, sent to guest's room or to a funeral home, with no celebratory framing.",
+      "compassionate_protocol": true
+    }
+  ]
+}

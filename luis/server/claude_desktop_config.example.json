@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "hap-rosewood-sand-hill": {
+      "command": "/opt/homebrew/bin/python3",
+      "args": [
+        "/Users/luisvargasfdz/Documents/GitHub/rosewood-hackathon-aisociety/server/main.py"
+      ],
+      "env": {
+        "DEMO_MODE": "true"
+      }
+    }
+  }
+}

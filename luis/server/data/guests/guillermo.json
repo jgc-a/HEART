@@ -1,0 +1,140 @@
+{
+  "guest_guid": "hap-guid-018f-guillermo-002",
+  "canonical_name": "Guillermo Aldana",
+  "name_variants": ["Guillermo Aldana", "G. Aldana"],
+  "flow_profile_hint": "corporate",
+  "arrival": {
+    "date": "2026-05-22",
+    "checkout_date": "2026-05-24",
+    "nights": 2,
+    "origin_city": "Los Angeles",
+    "origin_iata": "LAX",
+    "destination_iata": "SJC",
+    "carrier": "United Airlines",
+    "flight_number": "UA445",
+    "lands_local": "2026-05-22T10:15:00-07:00",
+    "lands_terminal": "SJC Terminal A",
+    "transport_to_property": "car_service_requested",
+    "estimated_arrival_at_property": "2026-05-22T11:05:00-07:00",
+    "party_size": 1,
+    "luggage": {
+      "checked_bags": 0,
+      "carry_on": 1,
+      "fragile": false
+    }
+  },
+  "preferences": {
+    "lodging": {
+      "mattress": "medium",
+      "pillows": { "firm": 1, "medium": 2 },
+      "lighting_bias": "bright_in_workspace",
+      "lighting_scene_preset": "Focus Bright",
+      "room_temperature_f": 70,
+      "room_temperature_c": 21,
+      "workspace": {
+        "desk_size": "large",
+        "monitor_requested": true,
+        "soundproof_workspace": true,
+        "second_chair": true,
+        "filtered_water_decanter": true
+      },
+      "sound": {
+        "ambient_playlist": "instrumental_focus",
+        "volume": "off_by_default"
+      },
+      "blackout": "moderate",
+      "floor_preference": "low",
+      "view_preference": "garden"
+    },
+    "dietary": {
+      "restrictions": [],
+      "allergies": [],
+      "preferences": ["high_protein_breakfast", "no_heavy_dinners"],
+      "beverages": {
+        "espresso_bar_setup_in_room": true,
+        "coffee": "double_espresso_morning_then_americano",
+        "water_still": "Saratoga_still",
+        "alcohol": "none_during_business_days"
+      }
+    },
+    "cultural": {
+      "languages": ["es", "en"],
+      "language_default": "en",
+      "register_business": "formal_english",
+      "nationality": "MX"
+    },
+    "wellness": {
+      "spa_interest": "none_this_trip",
+      "fitness": ["gym_morning"],
+      "sleep": {
+        "target_hours": 6,
+        "white_noise": true
+      }
+    }
+  },
+  "calendar": {
+    "conflicts": [
+      {
+        "date": "2026-05-22",
+        "start": "13:00",
+        "end": "18:00",
+        "type": "back_to_back_meetings",
+        "location": "Property Boardroom + Sand Hill Rd"
+      },
+      {
+        "date": "2026-05-23",
+        "start": "08:30",
+        "end": "20:00",
+        "type": "full_day_meetings",
+        "location": "Property + external"
+      }
+    ]
+  },
+  "health": {
+    "context": null,
+    "opt_in": false
+  },
+  "family": {
+    "signals": null,
+    "opt_in": false
+  },
+  "billing": {
+    "method": "corporate",
+    "billing_entity": "B-Drive IT",
+    "billing_contact": "guillermo@b-drive.com.mx",
+    "auth_token": "hap_billing_tok_corp_g7c4",
+    "incidentals_card": "Amex Centurion",
+    "pre_authorization_usd": 2000
+  },
+  "loyalty": {
+    "programs": [
+      {
+        "name": "Amex Centurion",
+        "tier": "Black",
+        "perks": ["FHR_priority", "Centurion_concierge"]
+      },
+      {
+        "name": "United MileagePlus",
+        "tier": "1K",
+        "member_id": "UA-1K-1742881"
+      }
+    ]
+  },
+  "identity": {
+    "verified": true,
+    "method": "passport+nfc",
+    "passport_issuer": "MX",
+    "biometric_enrolled": false
+  },
+  "consent_default_scope": [
+    "arrival.date_and_flight",
+    "preferences.lodging",
+    "preferences.dietary",
+    "calendar.conflicts",
+    "billing.method",
+    "loyalty.programs"
+  ],
+  "consent_optional_scope": [],
+  "default_ttl_hours": 48,
+  "notes_for_concierge": "Pure corporate. Wants invisible service. Workspace must function from arrival. No leisure suggestions."
+}
