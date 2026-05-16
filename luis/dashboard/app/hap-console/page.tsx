@@ -5,6 +5,7 @@ import { CommChain } from "@/components/CommChain";
 import { StaffBrief } from "@/components/StaffBrief";
 import { AuditLogStream } from "@/components/AuditLogStream";
 import { TelegramPanel } from "@/components/TelegramPanel";
+import { LiveGuestAgent } from "@/components/LiveGuestAgent";
 import { Button } from "@/components/ui/button";
 
 export default function HapConsolePage() {
@@ -31,8 +32,13 @@ export default function HapConsolePage() {
       </div>
 
       {/* live telegram channel — proves the chain is real */}
-      <div className="mb-7">
+      <div className="mb-5">
         <TelegramPanel />
+      </div>
+
+      {/* live guest agent — what Claude is learning from the conversation */}
+      <div className="mb-7">
+        <LiveGuestAgent />
       </div>
 
       {/* main comm chain */}

@@ -37,9 +37,11 @@ from telegram.ext import (  # noqa: E402
     CallbackQueryHandler,
     CommandHandler,
     ContextTypes,
+    MessageHandler,
+    filters,
 )
 
-from server import audit  # noqa: E402
+from server import audit, guest_agent  # noqa: E402
 
 TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
 USERS_FILE = _HERE / "data" / "telegram_users.json"
@@ -99,6 +101,71 @@ def consent_keyboard() -> InlineKeyboardMarkup:
     )
 
 
+def welcome_keyboard() -> InlineKeyboardMarkup:
+    """Shown at /start — points the user at the conversational flow."""
+    return InlineKeyboardMarkup(
+        [
+            [
+                InlineKeyboardButton(
+                    "📜 What is HAP?", callback_data="hap:about"
+                ),
+                InlineKeyboardButton(
+                    "🔐 How is this private?", callback_data="hap:audit"
+                ),
+            ],
+        ]
+    )
+
+
+def handshake_ready_keyboard() -> InlineKeyboardMarkup:
+    """Shown after the agent has learned enough — invites the actual handshake."""
+    return InlineKeyboardMarkup(
+        [
+            [
+                InlineKeyboardButton(
+                    "🤝 Initiate handshake with Rosewood",
+                    callback_data="hap:initiate_handshake",
+                )
+            ],
+            [
+                InlineKeyboardButton(
+                    "✏️ Tell me more first",
+                    callback_data="hap:continue_chat",
+                )
+            ],
+        ]
+    )
+
+
+def _format_live_profile(profile: dict) -> str:
+    """Render the live profile as a markdown consent block."""
+    bullets: list[str] = []
+
+    def line(emoji: str, label: str, value) -> None:
+        if isinstance(value, list) and value:
+            bullets.append(f"✅ *{label}:* " + ", ".join(value))
+        elif isinstance(value, str) and value:
+            bullets.append(f"✅ *{label}:* {value}")
+
+    line("✅", "Visit purpose", profile.get("visit_purpose"))
+    line("✅", "Lodging", profile.get("lodging"))
+    line("✅", "Dietary", profile.get("dietary"))
+    line("✅", "Cultural / beverages", profile.get("cultural"))
+    if profile.get("wellness"):
+        bullets.append("☐ *Wellness:* " + ", ".join(profile["wellness"]) + " _(optional)_")
+
+    if not bullets:
+        bullets = ["_(no preferences captured — agent will share visit purpose only)_"]
+
+    return (
+        "🏨 *Rosewood Sand Hill* would like to handshake with your agent.\n\n"
+        "Based on our conversation, your agent will share — _on demand, never stored_:\n\n"
+        + "\n".join(bullets)
+        + "\n\n*TTL:* 72 hours · *Retention:* 0 days · *Audit:* visible to you\n\n"
+        "Approve to let HEART prepare your arrival."
+    )
+
+
 STAFF_BRIEF_PREVIEW = (
     "🏨 *Staff Brief — preview*\n\n"
     "*Profile:* Bleisure · confidence 0.94\n\n"
@@ -147,9 +214,25 @@ async def cmd_start(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
             "label": f"Registered {user.first_name or 'user'}",
         }
     )
+    # reset any prior conversation so the demo starts clean
+    guest_agent.reset_profile(chat.id)
     await update.message.reply_text(
-        f"Welcome, {user.first_name}. You are now connected to the Rosewood HAP demo.\n\n"
-        "Type /handshake to receive the live consent checklist."
+        f"🏨 Welcome, {user.first_name}.\n\n"
+        "I'm your personal agent for this trip. Think of me as your Claude — "
+        "I learn what matters to you, then speak to *Rosewood Sand Hill* on your behalf, "
+        "only with your authorization.\n\n"
+        "*Tell me about your trip.* What's the purpose? Anything you'd want them to know? "
+        "(Just talk to me normally.)",
+        parse_mode=ParseMode.MARKDOWN,
+        reply_markup=welcome_keyboard(),
+    )
+    emit_event(
+        {
+            "ts": _now_iso(),
+            "kind": "interview_started",
+            "chat_id": chat.id,
+            "label": f"Interview started with {user.first_name or 'guest'}",
+        }
     )
 
 
@@ -218,10 +301,96 @@ async def cb_consent(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
     chat_id = query.message.chat.id
     data = query.data or ""
 
+    if data == "hap:request_handshake" or data == "hap:initiate_handshake":
+        # Build consent message from the live profile (real conversation data)
+        profile = guest_agent.get_profile(chat_id)
+        consent_text = _format_live_profile(profile)
+        await ctx.bot.send_message(
+            chat_id=chat_id,
+            text=consent_text,
+            parse_mode=ParseMode.MARKDOWN,
+            reply_markup=consent_keyboard(),
+        )
+        audit.append(
+            event="HAP.HANDSHAKE.REQUEST_SENT",
+            scope=["pre_arrival"],
+            extra={
+                "channel": "telegram",
+                "chat_id": chat_id,
+                "via": "button",
+                "purpose": profile.get("visit_purpose"),
+                "scope_size": (
+                    (1 if profile.get("visit_purpose") else 0)
+                    + len(profile.get("lodging") or [])
+                    + len(profile.get("dietary") or [])
+                    + len(profile.get("cultural") or [])
+                    + len(profile.get("wellness") or [])
+                ),
+            },
+        )
+        emit_event(
+            {
+                "ts": _now_iso(),
+                "kind": "handshake_sent",
+                "chat_id": chat_id,
+                "label": f"Handshake requested · purpose={profile.get('visit_purpose') or 'n/a'}",
+            }
+        )
+        return
+
+    if data == "hap:continue_chat":
+        await ctx.bot.send_message(
+            chat_id=chat_id,
+            text="Of course. What else should I know?",
+        )
+        return
+
+    if data == "hap:about":
+        await ctx.bot.send_message(
+            chat_id=chat_id,
+            text=(
+                "📜 *HAP — Hospitality Agent Protocol*\n\n"
+                "Anthropic built *MCP* to connect models to the world.\n"
+                "We propose *HAP* to connect guests to hospitality.\n\n"
+                "*Three guarantees:*\n"
+                "• Scope-based consent — you choose what to share\n"
+                "• TTL — every share expires (default 72h)\n"
+                "• Zero retention — the hotel queries on demand, never stores\n\n"
+                "Open spec. Anyone can implement. Rosewood is the reference."
+            ),
+            parse_mode=ParseMode.MARKDOWN,
+            reply_markup=welcome_keyboard(),
+        )
+        return
+
+    if data == "hap:audit":
+        await ctx.bot.send_message(
+            chat_id=chat_id,
+            text=(
+                "🔐 *Your audit trail*\n\n"
+                "Every HAP interaction is hash-chained with SHA-256.\n"
+                "Tampering with any entry breaks the chain — instantly visible.\n\n"
+                "Audit endpoint:\n"
+                "`https://heart.rosewood/audit/your-session`\n\n"
+                "Retention of guest data: *0 days*.\n"
+                "Retention of operational signal: indefinite, pseudonymous."
+            ),
+            parse_mode=ParseMode.MARKDOWN,
+            reply_markup=welcome_keyboard(),
+        )
+        return
+
     if data == "hap:approve:all":
+        profile = guest_agent.get_profile(chat_id)
+        scope_size = (
+            (1 if profile.get("visit_purpose") else 0)
+            + len(profile.get("lodging") or [])
+            + len(profile.get("dietary") or [])
+            + len(profile.get("cultural") or [])
+        )
         await query.edit_message_text(
-            "✅ *Approved*\n\n"
-            "Scope granted: 5 of 6 items (Health declined)\n"
+            f"✅ *Approved*\n\n"
+            f"Scope granted: {scope_size} items\n"
             "TTL: 72h · session `hap-session-018f…`\n\n"
             "Your concierge is preparing the stay…",
             parse_mode=ParseMode.MARKDOWN,
@@ -246,9 +415,10 @@ async def cb_consent(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
             }
         )
         await asyncio.sleep(2.2)
+        brief = _build_staff_brief_preview(profile)
         await ctx.bot.send_message(
             chat_id=chat_id,
-            text=STAFF_BRIEF_PREVIEW,
+            text=brief,
             parse_mode=ParseMode.MARKDOWN,
         )
         audit.append(
@@ -313,18 +483,116 @@ def _now_iso() -> str:
 # ---------- main ----------
 
 
+async def cb_message(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
+    """Plain-text messages → Guest Agent (Claude) conversation."""
+    msg = update.message
+    if msg is None or not msg.text or update.effective_chat is None:
+        return
+    chat_id = update.effective_chat.id
+    user_text = msg.text.strip()
+
+    # Show typing indicator while Claude thinks
+    await ctx.bot.send_chat_action(chat_id=chat_id, action="typing")
+
+    result = guest_agent.converse(chat_id, user_text)
+    reply = result["reply"]
+    ready = result["ready"]
+    new_keys = result["new_keys"]
+    profile = result["profile"]
+
+    audit.append(
+        event="GUEST_AGENT.CONVERSATION_TURN",
+        guest_id=str(chat_id),
+        scope=[],
+        extra={
+            "chat_id": chat_id,
+            "new_keys": new_keys,
+            "ready": ready,
+            "purpose": profile.get("visit_purpose"),
+        },
+    )
+
+    # emit one event per learned key so dashboard can highlight in real time
+    for k in new_keys:
+        v = profile.get(k)
+        if isinstance(v, list) and v:
+            label = f"learned {k}: {', '.join(v[-3:])}"
+        elif isinstance(v, str):
+            label = f"learned {k}: {v}"
+        else:
+            label = f"learned {k}"
+        emit_event(
+            {
+                "ts": _now_iso(),
+                "kind": "preference_learned",
+                "chat_id": chat_id,
+                "label": label,
+                "key": k,
+            }
+        )
+
+    if ready:
+        await msg.reply_text(
+            reply + "\n\n_Ready when you are._",
+            parse_mode=ParseMode.MARKDOWN,
+            reply_markup=handshake_ready_keyboard(),
+        )
+        emit_event(
+            {
+                "ts": _now_iso(),
+                "kind": "agent_ready",
+                "chat_id": chat_id,
+                "label": f"Agent ready to handshake · purpose={profile.get('visit_purpose')}",
+            }
+        )
+    else:
+        await msg.reply_text(reply, parse_mode=ParseMode.MARKDOWN)
+
+
+def _build_staff_brief_preview(profile: dict) -> str:
+    """Render the staff brief from real extracted preferences."""
+    lines: list[str] = ["🏨 *Staff Brief — preview*", ""]
+    purpose = profile.get("visit_purpose") or "general travel"
+    lines.append(f"*Visit context:* {purpose}")
+    lines.append("")
+    if profile.get("lodging"):
+        lines.append("*Room prep*")
+        for item in profile["lodging"]:
+            lines.append(f"• {item}")
+        lines.append("")
+    if profile.get("dietary"):
+        lines.append("*Dietary*")
+        for item in profile["dietary"]:
+            lines.append(f"• {item}")
+        lines.append("")
+    if profile.get("cultural"):
+        lines.append("*Sense of Place / culture*")
+        for item in profile["cultural"]:
+            lines.append(f"• {item}")
+        lines.append("")
+    if profile.get("wellness"):
+        lines.append("*Wellness (opt-in)*")
+        for item in profile["wellness"]:
+            lines.append(f"• {item}")
+        lines.append("")
+    lines.append("_Your room is being readied. Calendar specifics remain on your device._")
+    return "\n".join(lines)
+
+
 def main() -> None:
     if not TOKEN:
         print("ERROR: TELEGRAM_BOT_TOKEN not set in server/.env")
         print("       Get one from @BotFather and add it to .env, then re-run.")
         sys.exit(1)
-    print(f"Starting HAP Telegram bot (token: {TOKEN[:10]}…)")
+    print(f"Starting HAP Telegram bot (token: {TOKEN[:10]}…)", flush=True)
     app = Application.builder().token(TOKEN).build()
     app.add_handler(CommandHandler("start", cmd_start))
     app.add_handler(CommandHandler("handshake", cmd_handshake))
     app.add_handler(CommandHandler("demo", cmd_demo))
     app.add_handler(CallbackQueryHandler(cb_consent, pattern=r"^hap:"))
-    print("Listening (long-polling). Send /start from your Telegram app.")
+    # Plain text → conversational guest agent (must be last so it's the fallback)
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, cb_message))
+    print("Listening (long-polling). Send /start from your Telegram app.", flush=True)
     app.run_polling()
 
 
