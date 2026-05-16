@@ -41,7 +41,13 @@ from telegram.ext import (  # noqa: E402
     filters,
 )
 
-from server import audit, guest_agent, guest_memory, sessions  # noqa: E402
+from server import (  # noqa: E402
+    audit,
+    guest_agent,
+    guest_memory,
+    sessions,
+    voice_conversation,
+)
 from server.tools import (  # noqa: E402
     arrival as arrival_tool,
     checkout as checkout_tool,
@@ -404,6 +410,23 @@ async def cmd_start(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
             "chat_id": chat.id,
             "label": f"Interview started with {user.first_name or 'guest'}",
         }
+    )
+
+
+async def cmd_chatid(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
+    """Tiny helper to learn the chat_id of any chat (private, group, supergroup)."""
+    chat = update.effective_chat
+    if chat is None or update.message is None:
+        return
+    chat_type = chat.type  # 'private' | 'group' | 'supergroup' | 'channel'
+    title = chat.title or chat.first_name or ""
+    await update.message.reply_text(
+        f"🆔 *Chat ID*\n\n"
+        f"`{chat.id}`\n\n"
+        f"_type:_ {chat_type}\n"
+        f"_title:_ {title}\n\n"
+        "Paste this id where the orchestrator asks for it.",
+        parse_mode=ParseMode.MARKDOWN,
     )
 
 
@@ -950,6 +973,26 @@ async def _run_three_phase_flow(query, ctx: ContextTypes.DEFAULT_TYPE, chat_id: 
         }
     )
 
+    # === ElevenLabs voice conversation in the demo group (sponsor surface) ===
+    # Fire-and-forget: the two bots in the demo group post voice messages with
+    # distinct ElevenLabs voices, anchored on the guest's real profile. This
+    # runs IN PARALLEL with the dashboard animation. Bounded by a fixed
+    # 4-turn script; cannot loop.
+    voice_task = voice_conversation.kick_off_conversation_task(
+        profile=profile,
+        flow_profile="Bleisure",  # refined below after classify; this is a hint
+        stay_id=f"phase2-{chat_id}-{int(__import__('time').time())}",
+    )
+    if voice_task is not None:
+        emit_event(
+            {
+                "ts": _now_iso(),
+                "kind": "voice_conversation_started",
+                "chat_id": chat_id,
+                "label": "🔊 Voice conversation started in demo group · ElevenLabs",
+            }
+        )
+
     # Sequence the A2A turns so the dashboard renders them progressively.
     emit_event(
         {
@@ -1396,6 +1439,7 @@ def main() -> None:
     app.add_handler(CommandHandler("demo", cmd_demo))
     app.add_handler(CommandHandler("persona", cmd_persona))
     app.add_handler(CommandHandler("checkout", cmd_checkout))
+    app.add_handler(CommandHandler("chatid", cmd_chatid))
     app.add_handler(CallbackQueryHandler(cb_consent, pattern=r"^hap:"))
     # Plain text → conversational guest agent (must be last so it's the fallback)
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, cb_message))
