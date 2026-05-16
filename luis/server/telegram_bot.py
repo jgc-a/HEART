@@ -799,6 +799,59 @@ def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+# ---------- safe message helpers (markdown can come from Claude unescaped) ----------
+
+
+async def _safe_send_message(
+    ctx: ContextTypes.DEFAULT_TYPE, chat_id: int, text: str, *, try_markdown: bool = True
+) -> None:
+    """Send a message, retrying without parse_mode if Telegram rejects the markdown.
+
+    Claude's generated markdown (e.g. **bold**, [link](url)) often breaks
+    Telegram's legacy MARKDOWN parser. This wraps the call so a parse error
+    falls back cleanly to plain text instead of dropping the message.
+    """
+    if try_markdown:
+        try:
+            await ctx.bot.send_message(
+                chat_id=chat_id,
+                text=text,
+                parse_mode=ParseMode.MARKDOWN,
+                disable_web_page_preview=True,
+            )
+            return
+        except Exception as exc:  # noqa: BLE001
+            err = str(exc).lower()
+            if "can't parse" not in err and "entity" not in err and "markdown" not in err:
+                # Not a parse error — re-raise so we don't hide real failures
+                print(f"[telegram] send_message error (markdown attempt): {exc}")
+    # Fallback: plain text (strip the most aggressive markdown markers for readability)
+    fallback = text.replace("**", "").replace("__", "")
+    try:
+        await ctx.bot.send_message(
+            chat_id=chat_id, text=fallback, disable_web_page_preview=True
+        )
+    except Exception as exc:  # noqa: BLE001
+        print(f"[telegram] send_message fallback also failed: {exc}")
+
+
+async def _safe_edit_message(query, text: str) -> None:
+    try:
+        await query.edit_message_text(
+            text=text, parse_mode=ParseMode.MARKDOWN, disable_web_page_preview=True
+        )
+        return
+    except Exception as exc:  # noqa: BLE001
+        err = str(exc).lower()
+        if "can't parse" not in err and "entity" not in err:
+            print(f"[telegram] edit_message error (markdown attempt): {exc}")
+    fallback = text.replace("**", "").replace("__", "")
+    try:
+        await query.edit_message_text(text=fallback, disable_web_page_preview=True)
+    except Exception as exc:  # noqa: BLE001
+        print(f"[telegram] edit_message fallback also failed: {exc}")
+
+
 # ---------- A2A bridge: turn a live Telegram profile into a HAP guest JSON ----------
 
 
@@ -1175,27 +1228,26 @@ async def _handle_confirm_outcome(query, ctx: ContextTypes.DEFAULT_TYPE, chat_id
         }
     )
 
-    await query.edit_message_text(
+    await _safe_edit_message(
+        query,
         f"✅ *All three phases complete*\n\n"
         f"Stay `{arrival_result.stay_id}` is set.\n"
         f"Flow: *{arrival_result.flow_profile}*\n\n"
         "_Staff brief incoming…_",
-        parse_mode=ParseMode.MARKDOWN,
     )
 
     brief = arrival_result.staff_brief_markdown
     if len(brief) > 3500:
-        brief = brief[:3400] + "\n\n_(truncated for Telegram)_"
-    await ctx.bot.send_message(
-        chat_id=chat_id,
-        text=f"🏨 *HEART has prepared your stay*\n\n{brief}",
-        parse_mode=ParseMode.MARKDOWN,
+        brief = brief[:3400] + "\n\n(truncated for Telegram)"
+    await _safe_send_message(
+        ctx,
+        chat_id,
+        f"🏨 HEART has prepared your stay\n\n{brief}",
+        try_markdown=False,  # Claude markdown often breaks legacy MARKDOWN parser
     )
     if arrival_result.voice_line:
-        await ctx.bot.send_message(
-            chat_id=chat_id,
-            text=f"_{arrival_result.voice_line}_",
-            parse_mode=ParseMode.MARKDOWN,
+        await _safe_send_message(
+            ctx, chat_id, f"{arrival_result.voice_line}", try_markdown=False
         )
 
     audit.append(
@@ -1322,11 +1374,7 @@ async def _handle_confirm_outcome(query, ctx: ContextTypes.DEFAULT_TYPE, chat_id
         "agent through the protocol. There's nothing to download.)_"
     )
 
-    await ctx.bot.send_message(
-        chat_id=chat_id,
-        text="\n".join(handoff_lines),
-        parse_mode=ParseMode.MARKDOWN,
-    )
+    await _safe_send_message(ctx, chat_id, "\n".join(handoff_lines))
 
     _pending_outcomes.pop(chat_id, None)
 
