@@ -8,10 +8,11 @@ OPS_BASE  = "http://localhost:5560"
 LUIS_BASE = "http://localhost:3000"
 
 MODULES = [
+    {"id": "morningbrief","label": "Morning Brief",    "group": "Operator views",  "src": f"{LUIS_BASE}/view/morning-brief",               "source": "luis"},
     {"id": "arrivals",   "label": "Today's Arrivals",  "group": "Front-of-house",  "src": f"{LUIS_BASE}/",                                "source": "luis"},
     {"id": "humanqueue", "label": "Human Queue",       "group": "Front-of-house",  "src": f"{OPS_BASE}/ops?view=humanqueue&chrome=0",      "source": "ops"},
     {"id": "agents",     "label": "Guest Agents",      "group": "Front-of-house",  "src": f"{OPS_BASE}/ops?view=agents&chrome=0",          "source": "ops"},
-    {"id": "departing",  "label": "Departing Threads", "group": "Front-of-house",  "src": f"{OPS_BASE}/ops?view=departing&chrome=0",       "source": "ops"},
+    {"id": "departing",  "label": "Checkout",          "group": "Front-of-house",  "src": f"{OPS_BASE}/ops?view=departing&chrome=0",       "source": "ops"},
     {"id": "hapconsole", "label": "HAP Console",       "group": "Protocol",        "src": f"{LUIS_BASE}/hap-console",                      "source": "merged"},
     {"id": "reputation", "label": "Reputation Audit",  "group": "Protocol",        "src": f"{OPS_BASE}/ops?view=reputation&chrome=0",      "source": "ops"},
     {"id": "roigap",     "label": "Agent ROI",         "group": "Insights",        "src": f"{OPS_BASE}/ops?view=roigap&chrome=0",          "source": "ops"},
