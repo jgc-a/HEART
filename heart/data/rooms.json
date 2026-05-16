@@ -1,0 +1,13 @@
+{
+  "rooms": [
+    {"room_id": "101", "floor": 1, "type": "Deluxe", "status": "ready", "guest_guid": null, "capacity": 2},
+    {"room_id": "102", "floor": 1, "type": "Suite", "status": "occupied", "guest_guid": "hap-guid-0001-marcus-chen", "capacity": 4},
+    {"room_id": "103", "floor": 1, "type": "Standard", "status": "cleaning", "guest_guid": null, "capacity": 2},
+    {"room_id": "104", "floor": 1, "type": "Deluxe", "status": "ready", "guest_guid": null, "capacity": 2},
+    {"room_id": "105", "floor": 1, "type": "Garden Suite", "status": "arriving", "guest_guid": "hap-guid-0002-sarah-michael-torres", "capacity": 4},
+    {"room_id": "215", "floor": 2, "type": "Deluxe", "status": "occupied", "guest_guid": "hap-guid-0005-hamilton-complaint", "capacity": 2},
+    {"room_id": "301", "floor": 3, "type": "Family Suite", "status": "arriving", "guest_guid": "hap-guid-0003-martinez-family", "capacity": 6},
+    {"room_id": "408", "floor": 4, "type": "Suite", "status": "occupied", "guest_guid": "hap-guid-0004-james-whitfield", "capacity": 4},
+    {"room_id": "502", "floor": 5, "type": "Vineyard Suite", "status": "occupied", "guest_guid": "hap-guid-0001-marcus-chen", "capacity": 4}
+  ]
+}

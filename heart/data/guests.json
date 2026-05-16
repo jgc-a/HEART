@@ -1,0 +1,135 @@
+{
+  "guests": [
+    {
+      "guest_guid": "hap-guid-0001-marcus-chen",
+      "canonical_name": "Marcus Chen",
+      "flow": "CORPORATE",
+      "status": "IN_STAY",
+      "room": "502",
+      "check_in": "2026-05-16T14:00:00",
+      "check_out": "2026-05-18T11:00:00",
+      "company": "Nexus Ventures",
+      "loyalty_tier": "Rosewood Elite Platinum",
+      "bio": "Silicon Valley founder, Series C raise this week. Needs executive setup: standing desk, filtered water, Bloomberg terminal.",
+      "alerts": [],
+      "human_required": false,
+      "upsell_enabled": true,
+      "billing": "CORPORATE",
+      "tags": ["EXECUTIVE", "HIGH_VALUE", "REPEAT_GUEST"],
+      "rag_notes": "Prefers morning coffee at 6:30am. Allergic to shellfish. Suite 502 preferred (city view). No calls before 7am.",
+      "hap_events": [
+        {"event": "HAP.RESERVATION.CONFIRMED", "ts": "2026-05-14T09:00:00"},
+        {"event": "HAP.GUEST_STATE.ASSESSED", "ts": "2026-05-14T09:01:00"},
+        {"event": "HAP.FLOW.SELECTED", "ts": "2026-05-14T09:01:30", "detail": "CORPORATE"},
+        {"event": "HAP.BILLING.RESOLVED", "ts": "2026-05-14T09:02:00", "detail": "Nexus Ventures CC"},
+        {"event": "HAP.CHECK_IN.COMPLETED", "ts": "2026-05-16T14:22:00"}
+      ]
+    },
+    {
+      "guest_guid": "hap-guid-0002-sarah-michael-torres",
+      "canonical_name": "Sarah & Michael Torres",
+      "flow": "SPECIAL_DATES",
+      "status": "ARRIVING_TODAY",
+      "room": "Vineyard Suite",
+      "check_in": "2026-05-16T16:00:00",
+      "check_out": "2026-05-18T11:00:00",
+      "occasion": "10th Wedding Anniversary",
+      "loyalty_tier": "Rosewood Elite Gold",
+      "bio": "10th anniversary. Surprise gesture pre-coordinated: champagne, rose petals, handwritten card. DO NOT mention by staff — surprise.",
+      "alerts": [{"type": "SURPRISE_GESTURE", "msg": "Champagne + roses in suite before arrival", "done": false}],
+      "human_required": false,
+      "upsell_enabled": true,
+      "billing": "PERSONAL",
+      "tags": ["SPECIAL_DATES", "ANNIVERSARY", "HIGH_EMOTION"],
+      "rag_notes": "Michael is planning a surprise renewal vow. Coordinate with sommelier for vintage selection.",
+      "hap_events": [
+        {"event": "HAP.RESERVATION.CONFIRMED", "ts": "2026-05-10T11:00:00"},
+        {"event": "HAP.FLOW.SELECTED", "ts": "2026-05-10T11:01:00", "detail": "SPECIAL_DATES/ANNIVERSARY"}
+      ]
+    },
+    {
+      "guest_guid": "hap-guid-0003-martinez-family",
+      "canonical_name": "The Martinez Family",
+      "flow": "FAMILY_WITH_MINORS",
+      "status": "ARRIVING_TODAY",
+      "room": "Family Suite 301",
+      "check_in": "2026-05-16T15:00:00",
+      "check_out": "2026-05-19T11:00:00",
+      "minors": [{"name": "Sofia Martinez", "age": 8}, {"name": "Lucas Martinez", "age": 5}],
+      "bio": "Exec + spouse + 2 kids. Pre-setup: kids amenity kits, children's menu, pool towels x4.",
+      "alerts": [{"type": "HUMAN_REQUIRED", "msg": "CHECK-IN WITH MINORS — Requires documentary verification by senior staff", "done": false, "priority": "HIGH"}],
+      "human_required": true,
+      "human_reason": "Minors present — mandatory documentary verification",
+      "upsell_enabled": true,
+      "billing": "PERSONAL",
+      "tags": ["FAMILY_WITH_MINORS", "HUMAN_REQUIRED"],
+      "rag_notes": "Lucas has mild nut allergy. Pool hours 7am-9pm. Kids club available 9am-6pm.",
+      "hap_events": [
+        {"event": "HAP.RESERVATION.CONFIRMED", "ts": "2026-05-12T14:00:00"},
+        {"event": "HAP.FLOW.SELECTED", "ts": "2026-05-12T14:01:00", "detail": "FAMILY_WITH_MINORS"},
+        {"event": "HAP.CHECK_IN.HUMAN_REQUIRED", "ts": "2026-05-12T14:01:30", "detail": "Minors present"}
+      ]
+    },
+    {
+      "guest_guid": "hap-guid-0004-james-whitfield",
+      "canonical_name": "James Whitfield",
+      "flow": "BLEISURE",
+      "status": "IN_STAY",
+      "room": "408",
+      "check_in": "2026-05-14T13:00:00",
+      "check_out": "2026-05-18T14:00:00",
+      "bio": "MD at Goldman Sachs. Business Mon-Fri, leisure weekend extension. Partner joining Saturday.",
+      "alerts": [],
+      "human_required": false,
+      "upsell_enabled": true,
+      "billing": "SPLIT",
+      "billing_detail": "Mon-Fri: Goldman Sachs | Sat-Sun: Personal",
+      "tags": ["BLEISURE", "CORPORATE_WEEKDAY", "LEISURE_WEEKEND"],
+      "rag_notes": "Partner arrives Sat 11am. Switch to leisure mode: wine tasting, Napa day trip. Book table at Madera for Saturday dinner.",
+      "hap_events": [
+        {"event": "HAP.RESERVATION.CONFIRMED", "ts": "2026-05-13T10:00:00"},
+        {"event": "HAP.CHECK_IN.COMPLETED", "ts": "2026-05-14T13:15:00"},
+        {"event": "HAP.FLOW.REASSESSED", "ts": "2026-05-17T00:00:00", "detail": "CORPORATE → LEISURE pivot Saturday"}
+      ]
+    },
+    {
+      "guest_guid": "hap-guid-0005-hamilton-complaint",
+      "canonical_name": "Robert Hamilton",
+      "flow": "GENERAL",
+      "status": "IN_STAY",
+      "room": "215",
+      "check_in": "2026-05-15T15:00:00",
+      "check_out": "2026-05-17T11:00:00",
+      "bio": "Business traveler. COMPLAINT ACTIVE: reported HVAC failure at 2:14am. Escalated to Engineering + Duty Manager.",
+      "alerts": [
+        {"type": "COMPLAINT_ACTIVE", "msg": "HVAC failure — Escalated to Engineering (Ticket #ENG-2024) + Duty Manager Lopez", "done": false, "priority": "CRITICAL"},
+        {"type": "HUMAN_REQUIRED", "msg": "HEART on silent hold until complaint is closed by human", "done": false, "priority": "HIGH"}
+      ],
+      "human_required": true,
+      "human_reason": "Active complaint — HEART silent. Handling: Duty Manager Lopez",
+      "complaint_detail": "HVAC unit making loud noise since 2am. Guest unable to sleep. Requested room change.",
+      "upsell_enabled": false,
+      "billing": "PERSONAL",
+      "tags": ["COMPLAINT_ACTIVE", "HUMAN_REQUIRED", "MAINTENANCE"],
+      "hap_events": [
+        {"event": "HAP.CHECK_IN.COMPLETED", "ts": "2026-05-15T15:30:00"},
+        {"event": "HAP.IN_STAY.COMPLAINT_ESCALATED", "ts": "2026-05-16T02:14:00", "detail": "HVAC failure — Duty Manager + Engineering"},
+        {"event": "HAP.IN_STAY.MAINTENANCE_REPORTED", "ts": "2026-05-16T02:15:00", "detail": "HVAC Room 215 — Priority HIGH"}
+      ]
+    }
+  ],
+  "dispute_cases": [
+    {
+      "id": "DISP-001",
+      "guest": "Eleanor Voss",
+      "platform": "TripAdvisor",
+      "rating": 2,
+      "review": "The service was slow, our room wasn't ready on arrival, and no one seemed to care about our anniversary. Very disappointing for a luxury property.",
+      "stay_dates": "2026-05-10 to 2026-05-12",
+      "room": "Garden Suite 108",
+      "status": "BRIEF_GENERATED",
+      "warden_seal": "WARDEN-SHA256-d4f9a2b1c8e73f6d",
+      "brief_summary": "Immutable log shows: suite ready at 13:47 (standard check-in 15:00). Staff briefed 3x on the anniversary. Sommelier coordinated wine upgrade at 17:00. No complaints registered during the stay."
+    }
+  ]
+}

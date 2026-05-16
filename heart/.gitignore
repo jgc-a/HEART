@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+*.pyo
+.DS_Store
+*.bak
+*.tmp
+.env
+.venv/
+venv/
+*.db
+*.log
+*.pid

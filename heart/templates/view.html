@@ -1,0 +1,1105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HEART — Rosewood Sand Hill</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Inter:wght@300;400;500&display=swap');
+
+  :root {
+    --black:    #0A0A0A;
+    --dark:     #1C1C1C;
+    --white:    #FFFFFF;
+    --paper:    #FAF9F7;
+    --paper2:   #F4F2EF;
+    --border:   #E5E0D8;
+    --border2:  #EDE9E3;
+    --muted:    #9A9189;
+    --text:     #111111;
+    --gold:     #B09050;
+    --gold-lt:  #C8A96E;
+    --red:      #7A1F1F;
+    --green:    #2A5C40;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--white);
+    color: var(--text);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* HEADER */
+  header {
+    background: var(--black);
+    color: var(--white);
+    padding: 0 40px;
+    height: 62px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+  .header-brand { display: flex; align-items: baseline; gap: 20px; }
+  .header-logo {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 26px;
+    font-weight: 300;
+    letter-spacing: 5px;
+    text-transform: uppercase;
+    color: var(--white);
+  }
+  .header-subtitle {
+    font-size: 10px;
+    font-weight: 300;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--gold-lt);
+  }
+  .header-right { display: flex; align-items: center; gap: 18px; }
+  .live-dot {
+    width: 6px; height: 6px;
+    background: #4CAF50;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+  .time-display { font-size: 11px; font-weight: 300; color: rgba(255,255,255,.45); letter-spacing: 1.5px; }
+
+  /* METRICS BAR */
+  .metrics-bar {
+    background: var(--white);
+    padding: 0 40px;
+    display: flex;
+    align-items: stretch;
+    flex-shrink: 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .metric {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 3px; padding: 14px 26px;
+    border-right: 1px solid var(--border2);
+  }
+  .metric:last-child { border-right: none; }
+  .metric-value { font-family: 'Cormorant Garamond', serif; font-size: 26px; font-weight: 400; color: var(--text); line-height: 1; }
+  .metric-label { font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); }
+  .metric-alert .metric-value { color: var(--red); }
+  .metric-good  .metric-value { color: var(--gold); }
+
+  /* NAV */
+  nav {
+    background: var(--white);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    padding: 0 40px;
+    flex-shrink: 0;
+    overflow-x: auto;
+  }
+  nav::-webkit-scrollbar { height: 0; }
+  .tab {
+    padding: 13px 16px;
+    font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+    color: var(--muted); cursor: pointer;
+    border-bottom: 2px solid transparent;
+    white-space: nowrap; transition: color .15s;
+  }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--text); border-bottom-color: var(--text); font-weight: 500; }
+  .tab-badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 15px; height: 15px; background: var(--red);
+    color: white; border-radius: 50%; font-size: 9px; margin-left: 5px;
+  }
+
+  /* MAIN */
+  main { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
+  .view { display: none; flex: 1; overflow-y: auto; padding: 32px 40px; }
+  .view.active { display: flex; flex-direction: column; gap: 24px; }
+
+  /* TYPOGRAPHY */
+  .section-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 28px; font-weight: 300; color: var(--text); letter-spacing: .5px;
+  }
+  .section-sub { font-size: 10px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; margin-top: 4px; }
+
+  /* GUEST GRID */
+  .guest-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+    gap: 1px; background: var(--border); border: 1px solid var(--border);
+  }
+  .guest-card { background: var(--white); padding: 28px; transition: background .15s; position: relative; }
+  .guest-card:hover { background: var(--paper); }
+  .guest-card.human-required::before {
+    content:''; position:absolute; top:0; left:0; bottom:0; width:3px; background:var(--red);
+  }
+  .guest-card.complaint::before { background: #C04B1A; }
+  .guest-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; }
+  .guest-name { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 400; color: var(--text); }
+  .guest-room { font-size: 10px; color: var(--muted); margin-top: 3px; letter-spacing: 1px; }
+  .flow-badge {
+    font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase;
+    padding: 3px 8px; border: 1px solid var(--border);
+    color: var(--muted); background: var(--paper2); white-space: nowrap;
+  }
+  .flow-CORPORATE          { border-color:#C0CAE8; color:#3040A0; background:#F0F2FA; }
+  .flow-SPECIAL_DATES      { border-color:#E8C0D0; color:#8B1A50; background:#FAF0F4; }
+  .flow-BLEISURE           { border-color:#C0DCC8; color:#1A6030; background:#F0F8F2; }
+  .flow-FAMILY_WITH_MINORS { border-color:#E8DCC0; color:#7A4A10; background:#FAF5EC; }
+  .flow-MEDICAL            { border-color:#E8C0C0; color:#7A1F1F; background:#FAF0F0; }
+  .guest-bio { font-size: 13px; color: #666; line-height: 1.6; margin-bottom: 14px; }
+  .alerts-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+  .alert-item {
+    display: flex; align-items: flex-start; gap: 8px;
+    padding: 9px 12px; font-size: 12px; border: 1px solid;
+  }
+  .alert-HUMAN_REQUIRED   { background:#FEF5F5; color:var(--red);   border-color:#F0D0D0; }
+  .alert-COMPLAINT_ACTIVE { background:#FFF8F0; color:#C04B1A;      border-color:#F0DCC0; }
+  .alert-SURPRISE_GESTURE { background:#FDF5FA; color:#8B1A50;      border-color:#ECC8DC; }
+  .alert-icon { flex-shrink: 0; }
+  .hap-events-mini { border-top: 1px solid var(--border2); padding-top: 12px; display: flex; flex-direction: column; gap: 5px; }
+  .hap-event-item { display: flex; gap: 10px; align-items: center; font-size: 11px; }
+  .hap-event-name { color: var(--gold); font-weight: 500; font-size: 10px; }
+  .hap-event-ts   { color: #ccc; font-size: 10px; }
+
+  /* BUTTONS */
+  .btn { padding: 9px 18px; font-size: 10px; font-weight: 500; letter-spacing: 1.5px; text-transform: uppercase; cursor: pointer; border: none; transition: all .15s; }
+  .btn-dark    { background: var(--text); color: var(--white); }
+  .btn-dark:hover { background: var(--dark); }
+  .btn-outline { background: transparent; color: var(--text); border: 1px solid var(--border); }
+  .btn-outline:hover { border-color: var(--text); }
+  .btn-gold    { background: var(--gold); color: var(--white); }
+  .btn-red     { background: var(--red); color: white; }
+  .btn-forest  { background: var(--text); color: var(--white); }
+  .btn-forest:hover { background: var(--dark); }
+  .btn-bronze  { background: transparent; color: var(--gold); border: 1px solid var(--gold); }
+  .btn-bronze:hover { background: var(--gold); color: white; }
+
+  /* HAP CONSOLE */
+  .hap-console {
+    background: var(--black); padding: 20px; color: #DDD;
+    font-family: 'SF Mono', monospace; font-size: 12px;
+    height: 380px; overflow-y: auto; border: 1px solid var(--border);
+  }
+  .hap-console-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 16px; padding-bottom: 12px;
+    border-bottom: 1px solid rgba(255,255,255,.05);
+  }
+  .hap-event-line { display: flex; gap: 12px; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,.03); align-items: baseline; }
+  .hap-ts   { color: #444; font-size: 10px; width: 140px; flex-shrink: 0; }
+  .hap-ev   { color: var(--gold-lt); font-weight: 600; font-size: 11px; }
+  .hap-guid { color: #444; font-size: 10px; }
+  .hap-det  { color: #666; font-size: 10px; }
+
+  /* AGENT CHAT */
+  .agent-panel { background: var(--white); border: 1px solid var(--border); }
+  .agent-header { background: var(--black); padding: 16px 24px; display: flex; align-items: center; gap: 12px; justify-content: space-between; }
+  .agent-name   { font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 300; color: var(--white); letter-spacing: 1px; }
+  .agent-role   { font-size: 10px; color: var(--gold-lt); letter-spacing: 1.5px; text-transform: uppercase; }
+  .agent-model  { font-size: 10px; color: #555; background: #1A1A1A; padding: 3px 8px; }
+  .chat-messages {
+    padding: 20px; height: 280px; overflow-y: auto;
+    display: flex; flex-direction: column; gap: 12px; background: var(--paper);
+  }
+  .msg { display: flex; flex-direction: column; gap: 4px; }
+  .msg-role    { font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; color: #bbb; }
+  .msg-content { padding: 10px 14px; font-size: 13px; line-height: 1.6; max-width: 80%; }
+  .msg.user  .msg-content { background: var(--text); color: var(--white); align-self: flex-end; }
+  .msg.agent .msg-content { background: var(--white); border: 1px solid var(--border); color: var(--text); align-self: flex-start; }
+  .msg.agent .msg-role    { align-self: flex-start; }
+  .msg.user  .msg-role    { align-self: flex-end; }
+  .chat-input-area { padding: 14px 20px; border-top: 1px solid var(--border2); display: flex; gap: 10px; background: var(--white); }
+  .chat-input {
+    flex: 1; padding: 9px 12px; border: 1px solid var(--border);
+    font-size: 13px; font-family: 'Inter', sans-serif; outline: none;
+    color: var(--text); background: var(--paper);
+  }
+  .chat-input:focus { border-color: var(--text); }
+
+  /* HUMAN QUEUE */
+  .queue-item { background: var(--white); border: 1px solid var(--border); border-left: 3px solid var(--red); padding: 20px 24px; display: flex; align-items: center; gap: 20px; justify-content: space-between; }
+  .queue-item.resolved { border-left-color: var(--green); opacity: .65; }
+  .queue-priority { font-size: 9px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--red); }
+  .queue-priority.resolved { color: var(--green); }
+  .queue-guest  { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 400; color: var(--text); }
+  .queue-reason { font-size: 13px; color: #666; margin-top: 4px; }
+  .queue-meta   { font-size: 10px; color: #bbb; margin-top: 6px; }
+
+  /* DISPUTE */
+  .dispute-card { background: var(--white); border: 1px solid var(--border); padding: 28px; }
+  .dispute-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
+  .rating-stars { color: var(--gold); font-size: 16px; letter-spacing: 2px; }
+  .platform-badge { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; background: var(--paper2); padding: 3px 8px; color: var(--muted); border: 1px solid var(--border); }
+  .review-text { font-style: italic; color: #666; font-size: 14px; line-height: 1.7; padding: 18px 20px; background: var(--paper); border-left: 2px solid var(--border); margin-bottom: 16px; }
+  .brief-output { background: var(--black); color: #CCC; padding: 20px; font-size: 12px; line-height: 1.8; white-space: pre-wrap; font-family: 'Inter', sans-serif; }
+  .warden-seal  { margin-top: 10px; padding: 8px 12px; background: var(--dark); color: var(--gold-lt); font-family: monospace; font-size: 10px; }
+
+  /* FORMS */
+  .generate-form { background: var(--white); border: 1px solid var(--border); padding: 28px; display: flex; flex-direction: column; gap: 16px; }
+  .form-row  { display: flex; gap: 14px; }
+  .form-group{ display: flex; flex-direction: column; gap: 6px; flex: 1; }
+  .form-label{ font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); }
+  .form-input, .form-select, .form-textarea { padding: 9px 12px; border: 1px solid var(--border); font-size: 13px; font-family: 'Inter', sans-serif; color: var(--text); background: var(--paper); outline: none; }
+  .form-input:focus, .form-textarea:focus { border-color: var(--text); }
+  .form-textarea { resize: vertical; min-height: 80px; }
+
+  /* METRICS GRID */
+  .metrics-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); }
+  .metric-card { background: var(--white); padding: 28px; text-align: center; }
+  .metric-big  { font-family: 'Cormorant Garamond', serif; font-size: 52px; font-weight: 300; color: var(--text); line-height: 1; margin-bottom: 10px; }
+  .metric-name { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); }
+  .metric-desc { font-size: 12px; color: #bbb; margin-top: 8px; font-style: italic; }
+
+  /* AGENT SELECTOR */
+  .agent-selector { display: flex; gap: 1px; background: var(--border); border: 1px solid var(--border); }
+  .agent-btn { flex: 1; padding: 14px 20px; background: var(--white); cursor: pointer; transition: background .15s; text-align: left; border: none; }
+  .agent-btn:hover { background: var(--paper2); }
+  .agent-btn.active { background: var(--black); color: var(--white); }
+  .agent-btn.active .role { color: var(--gold-lt); }
+  .agent-btn .name { font-family: 'Cormorant Garamond', serif; font-size: 18px; font-weight: 400; }
+  .agent-btn .role { font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); margin-top: 3px; }
+  .guest-select-group { display: flex; gap: 10px; align-items: center; padding: 12px 20px; background: var(--paper); border-bottom: 1px solid var(--border2); }
+  .guest-select-group label { font-size: 9px; text-transform: uppercase; letter-spacing: 2px; color: var(--muted); white-space: nowrap; }
+  .guest-select-group select { flex: 1; padding: 6px 10px; border: 1px solid var(--border); font-size: 13px; font-family: 'Inter', sans-serif; background: var(--white); color: var(--text); outline: none; }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 3px; height: 3px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); }
+  .loading { color: var(--muted); font-style: italic; font-size: 13px; padding: 24px; text-align: center; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-brand">
+    <div class="header-logo">Rosewood</div>
+    <div class="header-subtitle">The View &nbsp;&middot;&nbsp; Sand Hill</div>
+  </div>
+  <div class="header-right">
+    <div class="live-dot"></div>
+    <div class="time-display" id="clock"></div>
+  </div>
+</header>
+
+<div class="metrics-bar">
+  <div class="metric"><span class="metric-value" id="m-total">&#x2014;</span><span class="metric-label">In Residence</span></div>
+  <div class="metric"><span class="metric-value" id="m-arriving">&#x2014;</span><span class="metric-label">Arriving Today</span></div>
+  <div class="metric metric-alert"><span class="metric-value" id="m-human">&#x2014;</span><span class="metric-label">Matters &rarr; Human</span></div>
+  <div class="metric metric-alert"><span class="metric-value" id="m-complaints">&#x2014;</span><span class="metric-label">Active Complaints</span></div>
+  <div class="metric metric-good"><span class="metric-value" id="m-asc">&#x2014;</span><span class="metric-label">ASC Score</span></div>
+  <div class="metric metric-good"><span class="metric-value" id="m-hap">&#x2014;</span><span class="metric-label">HAP Uptime</span></div>
+</div>
+
+<nav>
+  <div class="tab active" onclick="showView('arrivals')">Arrivals</div>
+  <div class="tab" onclick="showView('instay')">In-Stay Matters</div>
+  <div class="tab" onclick="showView('departing')">Departing Threads</div>
+  <div class="tab" onclick="showView('humanqueue')">Human Queue <span class="tab-badge" id="queue-badge">&#x2014;</span></div>
+  <div class="tab" onclick="showView('hapconsole')">HAP Console</div>
+  <div class="tab" onclick="showView('agents')">Agents</div>
+  <div class="tab" onclick="showView('reputation')">Reputation Audit</div>
+  <div class="tab" onclick="showView('asc')">ASC Metrics</div>
+  <div class="tab" onclick="showView('rooms')">Rooms</div>
+  <div class="tab" onclick="showView('brain')">Agent Brain</div>
+  <div class="tab" onclick="showView('roigap')">Agent ROI</div>
+</nav>
+
+<main>
+
+  <div id="view-arrivals" class="view active">
+    <div><div class="section-title">Arrivals</div><div class="section-sub">May 16, 2026 &middot; Rosewood Sand Hill</div></div>
+    <div class="guest-grid" id="arrivals-grid"><div class="loading">Loading arrivals&hellip;</div></div>
+  </div>
+
+  <div id="view-instay" class="view">
+    <div><div class="section-title">In-Stay Matters</div><div class="section-sub">Current residence &middot; Active HAP signals</div></div>
+    <div class="guest-grid" id="instay-grid"><div class="loading">Loading matters&hellip;</div></div>
+  </div>
+
+  <div id="view-departing" class="view">
+    <div><div class="section-title">Departing Threads</div><div class="section-sub">Post-stay &middot; Memory snapshot &middot; KINDRED trigger</div></div>
+    <div style="background:var(--paper);border:1px solid var(--border);padding:48px;text-align:center;">
+      <div style="font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:300;margin-bottom:10px;">No departures today</div>
+      <div style="font-size:13px;color:var(--muted);">Thread agent will activate at checkout to generate memory snapshots and WARDEN dispute audit seals.</div>
+    </div>
+  </div>
+
+  <div id="view-humanqueue" class="view">
+    <div><div class="section-title">Human-Required Queue</div><div class="section-sub">Matters requiring staff intervention</div></div>
+    <div style="display:flex;flex-direction:column;gap:1px;background:var(--border);border:1px solid var(--border);" id="queue-list"><div class="loading">Loading&hellip;</div></div>
+  </div>
+
+  <div id="view-hapconsole" class="view">
+    <div><div class="section-title">HAP Console</div><div class="section-sub">Live event stream &middot; Hospitality Agent Protocol</div></div>
+    <div class="hap-console" id="hap-console">
+      <div class="hap-console-header">
+        <div style="color:var(--gold-lt);letter-spacing:2px;text-transform:uppercase;font-size:10px;">Event Stream &middot; Live</div>
+        <div style="display:flex;align-items:center;gap:8px;"><div class="live-dot"></div><span style="color:#444;font-size:10px;letter-spacing:1px;">STREAMING</span></div>
+      </div>
+      <div id="hap-events-log"></div>
+    </div>
+    <div style="padding:16px 20px;background:var(--dark);border:1px solid #222;">
+      <div style="font-size:9px;color:#444;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;">Emit Custom HAP Event</div>
+      <div style="display:flex;gap:10px;">
+        <select id="emit-guest" style="flex:1;padding:8px;border:1px solid #333;background:#111;color:#CCC;font-size:12px;"><option value="system">System</option></select>
+        <input id="emit-event" placeholder="HAP.CUSTOM.EVENT" value="HAP.IN_STAY.PROACTIVE_OFFER" style="flex:2;padding:8px;border:1px solid #333;background:#111;color:#CCC;font-size:12px;">
+        <input id="emit-detail" placeholder="detail&hellip;" style="flex:2;padding:8px;border:1px solid #333;background:#111;color:#CCC;font-size:12px;">
+        <button onclick="emitEvent()" class="btn btn-gold" style="white-space:nowrap;">Emit</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="view-agents" class="view" style="padding:0;overflow:hidden;flex-direction:row;">
+
+    <!-- LEFT: Guest list -->
+    <div style="width:260px;min-width:260px;border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;">
+      <div style="padding:20px 20px 12px;border-bottom:1px solid var(--border);">
+        <div style="font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:400;color:var(--text);">Guest Agents</div>
+        <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-top:3px;">Selecciona un huésped</div>
+      </div>
+      <div id="agent-guest-list" style="flex:1;overflow-y:auto;padding:8px;">
+        <div style="color:var(--muted);font-size:12px;padding:16px;text-align:center;">Cargando huéspedes…</div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Chat with guest agent -->
+    <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;">
+
+      <!-- Header: guest selected -->
+      <div id="agent-chat-header" style="padding:16px 24px;border-bottom:1px solid var(--border);background:var(--paper);display:flex;align-items:center;justify-content:space-between;">
+        <div>
+          <div id="agent-guest-name" style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:400;color:var(--text);">Selecciona un huésped →</div>
+          <div id="agent-guest-meta" style="font-size:10px;color:var(--muted);letter-spacing:1px;margin-top:2px;">Elige un huésped de la lista para iniciar conversación con su agente</div>
+        </div>
+        <div style="font-size:9px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;text-align:right;">
+          Agente del huésped<br>
+          <span style="color:var(--gold);">claude-haiku-4-5 · HAP</span>
+        </div>
+      </div>
+
+      <!-- Quick questions -->
+      <div id="agent-quick-btns" style="padding:10px 24px;border-bottom:1px solid var(--border2);display:flex;gap:8px;flex-wrap:wrap;background:var(--white);">
+        <span style="font-size:9px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;align-self:center;">Preguntas rápidas:</span>
+        <button onclick="quickAsk('¿Qué necesita el huésped en este momento?')" class="btn btn-outline" style="font-size:9px;padding:5px 10px;">¿Qué necesita ahora?</button>
+        <button onclick="quickAsk('¿Tiene alguna solicitud especial o preferencia que el hotel deba saber?')" class="btn btn-outline" style="font-size:9px;padding:5px 10px;">Solicitudes especiales</button>
+        <button onclick="quickAsk('¿Tiene restricciones alimentarias o alergias?')" class="btn btn-outline" style="font-size:9px;padding:5px 10px;">Alergias / dieta</button>
+        <button onclick="quickAsk('¿Cómo fue la experiencia del huésped hasta ahora? ¿Está satisfecho?')" class="btn btn-outline" style="font-size:9px;padding:5px 10px;">Satisfacción actual</button>
+        <button onclick="quickAsk('¿Qué podría hacer el hotel para superar sus expectativas hoy?')" class="btn btn-outline" style="font-size:9px;padding:5px 10px;">Cómo consentirlo</button>
+        <button onclick="quickAsk('¿Tiene alguna queja o señal de insatisfacción que deba atenderse?')" class="btn btn-outline" style="font-size:9px;padding:5px 10px;">Alertas activas</button>
+      </div>
+
+      <!-- Messages -->
+      <div class="chat-messages" id="chat-messages" style="flex:1;overflow-y:auto;padding:24px;display:flex;flex-direction:column;gap:14px;background:var(--white);">
+        <div style="text-align:center;color:var(--muted);font-size:12px;font-style:italic;margin-top:40px;">
+          Selecciona un huésped para comenzar a comunicarte con su agente personal.
+        </div>
+      </div>
+
+      <!-- Input -->
+      <div class="chat-input-area" style="border-top:1px solid var(--border);padding:16px 24px;display:flex;gap:12px;background:var(--white);">
+        <input class="chat-input" id="chat-input" placeholder="Pregunta al agente del huésped…" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChat();}" style="flex:1;" disabled>
+        <button class="btn btn-dark" id="chat-send-btn" onclick="sendChat()" disabled>Enviar</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="view-reputation" class="view">
+    <div><div class="section-title">Reputation Audit</div><div class="section-sub">Dispute briefs &middot; WARDEN attestation &middot; Immutable log reconstruction</div></div>
+    <div class="dispute-card">
+      <div class="dispute-header">
+        <div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:400;">Eleanor Voss</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:3px;">Garden Suite 108 &middot; May 10&#x2013;12, 2026</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div class="rating-stars">&#x2605;&#x2605;&#x2606;&#x2606;&#x2606;</div>
+          <div class="platform-badge">TripAdvisor</div>
+        </div>
+      </div>
+      <div class="review-text">"The service was slow, our room wasn't ready on arrival, and no one seemed to care about our anniversary. Very disappointing for a luxury property."</div>
+      <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;">WARDEN Dispute Brief</div>
+      <div class="brief-output">Log inmutable muestra: suite lista a las 13:47 (check-in estándar 15:00 — huésped llegó 13:30 sin prior ETA). Staff brief emitido 3x sobre aniversario (12:00, 13:00, 13:30). Sommelier coordinó upgrade de Moët a Dom Pérignon a las 17:00. No se registraron quejas ni señales de insatisfacción durante la estancia. HAP.IN_STAY events: 47 interacciones positivas, 0 escalamientos.</div>
+      <div class="warden-seal">&#x2B21; WARDEN-SHA256-d4f9a2b1c8e73f6d &middot; Firmado: 2026-05-16T09:14:22Z &middot; Inmutable</div>
+      <div style="display:flex;justify-content:flex-end;margin-top:16px;">
+        <button class="btn btn-dark" onclick="openDisputeModal('Eleanor Voss','TripAdvisor','WARDEN-SHA256-d4f9a2b1c8e73f6d','2026-05-16T09:14:22Z','The service was slow, our room wasn\'t ready on arrival, and no one seemed to care about our anniversary. Very disappointing for a luxury property.','Log inmutable muestra: suite lista a las 13:47 (check-in estándar 15:00 — huésped llegó 13:30 sin prior ETA). Staff brief emitido 3x sobre aniversario (12:00, 13:00, 13:30). Sommelier coordinó upgrade de Moët a Dom Pérignon a las 17:00. No se registraron quejas ni señales de insatisfacción durante la estancia. HAP.IN_STAY events: 47 interacciones positivas, 0 escalamientos.')">&#x2B21; Iniciar Disputa Formal</button>
+      </div>
+    </div>
+
+  <!-- MODAL: Disputa formal -->
+  <div id="dispute-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:1000;align-items:center;justify-content:center;">
+    <div style="background:var(--white);width:680px;max-width:95vw;max-height:90vh;overflow-y:auto;display:flex;flex-direction:column;">
+      <div style="background:var(--black);padding:20px 28px;display:flex;align-items:center;justify-content:space-between;">
+        <div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:20px;color:var(--white);letter-spacing:1px;">Disputa Formal — <span id="dm-platform"></span></div>
+          <div style="font-size:9px;color:var(--gold-lt);letter-spacing:2px;text-transform:uppercase;margin-top:3px;">WARDEN · Evidencia inmutable</div>
+        </div>
+        <button onclick="closeDisputeModal()" style="background:none;border:none;color:#888;font-size:20px;cursor:pointer;">✕</button>
+      </div>
+      <div style="padding:28px;display:flex;flex-direction:column;gap:20px;">
+        <!-- Instrucciones por plataforma -->
+        <div id="dm-instructions" style="background:var(--paper);border:1px solid var(--border);padding:16px;font-size:12px;line-height:1.8;color:#555;"></div>
+        <!-- Carta generada -->
+        <div>
+          <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;">Carta de disputa generada por WARDEN</div>
+          <div id="dm-letter" style="background:var(--black);color:#CCC;padding:20px;font-size:12px;line-height:1.9;white-space:pre-wrap;font-family:'Inter',sans-serif;min-height:180px;"></div>
+        </div>
+        <!-- Sello -->
+        <div id="dm-seal" style="padding:8px 12px;background:var(--dark);color:var(--gold-lt);font-family:monospace;font-size:10px;"></div>
+        <!-- Acciones -->
+        <div style="display:flex;gap:12px;justify-content:flex-end;flex-wrap:wrap;">
+          <button class="btn btn-outline" onclick="copyDispute()">⎘ Copiar carta</button>
+          <button class="btn btn-outline" id="dm-link-btn" onclick="openPlatformPortal()" style="display:none;"></button>
+          <button class="btn btn-dark" id="dm-generate-btn" onclick="generateDisputeLetter()">⬡ Generar carta con IA</button>
+        </div>
+        <div id="dm-copy-ok" style="display:none;font-size:11px;color:var(--green);text-align:right;letter-spacing:1px;">✓ Copiado al portapapeles</div>
+      </div>
+    </div>
+  </div>
+    <div><div class="section-title" style="font-size:22px;">Generate Dispute Brief</div><div class="section-sub">Debate de validez &middot; Log inmutable &middot; WARDEN verdict</div></div>
+    <div class="generate-form">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Guest Name</label><input class="form-input" id="d-guest" placeholder="Robert Hamilton"></div>
+        <div class="form-group"><label class="form-label">Platform</label><select class="form-select" id="d-platform"><option>TripAdvisor</option><option>Google</option><option>Booking.com</option><option>Trustpilot</option></select></div>
+        <div class="form-group"><label class="form-label">Rating</label><select class="form-select" id="d-rating"><option value="1">1 star</option><option value="2">2 stars</option><option value="3">3 stars</option></select></div>
+        <div class="form-group"><label class="form-label">Stay Dates</label><input class="form-input" id="d-dates" placeholder="May 15&#x2013;17, 2026"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Review Text</label><textarea class="form-textarea" id="d-review" placeholder="Paste the negative review here&hellip;"></textarea></div>
+      <div class="form-group"><label class="form-label">Acción solicitada por el agente del huésped</label><textarea class="form-textarea" id="d-agent-action" style="min-height:70px;" placeholder="Ej: El agente solicitó upgrade de habitación al check-in, decoración de aniversario y botella de champagne a las 19:00…"></textarea></div>
+      <div style="display:flex;justify-content:flex-end;"><button class="btn btn-dark" id="btn-generate-brief" onclick="generateBrief()">⬡ Debatir validez de queja</button></div>
+      <div id="brief-result" style="display:none;">
+        <div id="brief-verdict-banner" style="padding:14px 20px;font-size:13px;font-weight:600;letter-spacing:2px;text-transform:uppercase;text-align:center;margin-bottom:0;"></div>
+        <div class="brief-output" id="brief-text" style="white-space:pre-wrap;"></div>
+        <div class="warden-seal" id="brief-seal"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="view-asc" class="view">
+    <div><div class="section-title">ASC Metrics Engine</div><div class="section-sub">ARCA Standard of Care &middot; LQA and Forbes Five-Star are the floor</div></div>
+    <div class="metrics-grid">
+      <div class="metric-card"><div class="metric-big" style="color:var(--gold);" id="asc-score">94.2</div><div class="metric-name">ASC Score</div><div class="metric-desc">ARCA Standard of Care composite index</div></div>
+      <div class="metric-card"><div class="metric-big" id="unspoken-score">87.5</div><div class="metric-name">Unspoken Score</div><div class="metric-desc">Needs anticipated before verbalization</div></div>
+      <div class="metric-card"><div class="metric-big" style="font-size:40px;" id="tti">1.8m</div><div class="metric-name">Time to Insight</div><div class="metric-desc">Avg time from signal to agent action</div></div>
+      <div class="metric-card"><div class="metric-big" id="staff-nps">91</div><div class="metric-name">Staff Amplification NPS</div><div class="metric-desc">HEART as co-pilot, not co-director</div></div>
+      <div class="metric-card"><div class="metric-big" style="color:var(--gold-lt);">&#x221E;</div><div class="metric-name">Lifetime Connection Score</div><div class="metric-desc">KINDRED active across all HAP properties</div></div>
+      <div class="metric-card"><div class="metric-big" style="font-size:36px;" id="hap-uptime">99.97%</div><div class="metric-name">HAP Uptime</div><div class="metric-desc">Hospitality Agent Protocol availability</div></div>
+    </div>
+    <div style="background:var(--black);padding:48px;text-align:center;color:var(--white);">
+      <div style="font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:300;letter-spacing:2px;margin-bottom:14px;">The Paradigm Shift</div>
+      <div style="font-size:14px;color:rgba(255,255,255,.55);line-height:2;max-width:560px;margin:0 auto;">
+        Anthropic created MCP to connect models to the world.<br>
+        <span style="color:var(--white);">Rosewood created HAP to connect guests to hospitality.</span><br><br>
+        The ERP is dead. The era of the ARP has begun.
+      </div>
+      <div style="margin-top:24px;font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--gold);">ARCA &middot; B Drive IT &middot; Rosewood Sand Hill &middot; 2026</div>
+    </div>
+  </div>
+
+  <div id="view-rooms" class="view">
+    <div><div class="section-title">Rooms</div><div class="section-sub">Real-time occupancy &middot; Status &middot; Amenities</div></div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:1px;background:var(--border);border:1px solid var(--border);" id="rooms-grid"><div class="loading">Loading&hellip;</div></div>
+  </div>
+
+  <div id="view-brain" class="view">
+    <div><div class="section-title">Agent Brain Log</div><div class="section-sub">Decision reasoning &middot; What the agents are thinking</div></div>
+    <div style="display:flex;gap:1px;background:var(--border);border:1px solid var(--border);margin-bottom:1px;">
+      <button class="btn" style="background:var(--black);color:white;flex:1;" onclick="loadAgentBrain('orchestrator')">Orchestrator</button>
+      <button class="btn" style="background:var(--dark);color:white;flex:1;" onclick="loadAgentBrain('shadow')">Shadow</button>
+      <button class="btn" style="background:var(--dark);color:white;flex:1;" onclick="loadAgentBrain('thread')">Thread</button>
+      <button class="btn btn-outline" style="flex:1;" onclick="loadAgentBrain()">All Agents</button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:1px;background:var(--border);border:1px solid var(--border);max-height:calc(100vh - 320px);overflow-y:auto;" id="brain-log"><div class="loading">Loading&hellip;</div></div>
+  </div>
+
+  <div id="view-roigap" class="view">
+    <div><div class="section-title">Agent ROI</div><div class="section-sub">Where HEART resolves issues &middot; Where humans are still needed</div></div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border:1px solid var(--border);">
+      <div class="metric-card"><div class="metric-big" id="roi-total-matters">&#x2014;</div><div class="metric-name">Total Matters</div></div>
+      <div class="metric-card"><div class="metric-big" style="color:var(--green);" id="roi-agent-resolved">&#x2014;</div><div class="metric-name">Agent Resolved</div></div>
+      <div class="metric-card"><div class="metric-big" style="color:var(--red);" id="roi-human-required">&#x2014;</div><div class="metric-name">Escalated to Human</div></div>
+      <div class="metric-card"><div class="metric-big" style="color:var(--gold);" id="roi-percentage">&#x2014;</div><div class="metric-name">Agent Resolution Rate</div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:2fr 1fr;gap:24px;">
+      <div>
+        <div class="section-title" style="font-size:20px;margin-bottom:12px;">Agent-Resolved</div>
+        <div style="display:flex;flex-direction:column;gap:1px;background:var(--border);border:1px solid var(--border);" id="roi-agent-list"><div class="loading">Loading&hellip;</div></div>
+      </div>
+      <div>
+        <div class="section-title" style="font-size:20px;margin-bottom:12px;">Escalated to Human</div>
+        <div style="display:flex;flex-direction:column;gap:1px;background:var(--border);border:1px solid var(--border);" id="roi-human-list"><div class="loading">Loading&hellip;</div></div>
+      </div>
+    </div>
+  </div>
+
+
+</main>
+
+<script>
+let currentAgent = 'orchestrator';
+let allGuests = [];
+
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clock').textContent =
+    now.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}) + ' · PST';
+}
+setInterval(updateClock, 1000); updateClock();
+
+function showView(name) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('view-'+name).classList.add('active');
+  event.currentTarget.classList.add('active');
+  if (name === 'agents') loadAgentGuestList();
+}
+
+async function loadMetrics() {
+  try {
+    const r = await fetch('/api/heart/v1/metrics');
+    const d = await r.json();
+    document.getElementById('m-total').textContent      = d.total_in_stay;
+    document.getElementById('m-arriving').textContent   = d.arriving_today;
+    document.getElementById('m-human').textContent      = d.human_required;
+    document.getElementById('m-complaints').textContent = d.active_complaints;
+    document.getElementById('m-asc').textContent        = d.asc_score;
+    document.getElementById('m-hap').textContent        = d.hap_uptime;
+  } catch(e) {}
+}
+setInterval(loadMetrics, 10000); loadMetrics();
+
+function guestCard(g) {
+  const humanClass     = g.human_required ? 'human-required' : '';
+  const complaintClass = (g.alerts||[]).some(a=>a.type==='COMPLAINT_ACTIVE') ? 'complaint' : '';
+  const alertsHtml = (g.alerts||[]).map(a => `
+    <div class="alert-item alert-${a.type}">
+      <span class="alert-icon">${a.type==='HUMAN_REQUIRED'?'⚠':a.type==='COMPLAINT_ACTIVE'?'●':'◆'}</span>
+      <span>${a.msg}</span>
+    </div>`).join('');
+  const eventsHtml = (g.hap_events||[]).slice(-3).map(e => `
+    <div class="hap-event-item">
+      <span class="hap-event-name">${e.event}</span>
+      <span class="hap-event-ts">${e.ts ? e.ts.split('T')[1]?.slice(0,5) : ''}</span>
+    </div>`).join('');
+  return `
+    <div class="guest-card ${humanClass} ${complaintClass}">
+      <div class="guest-header">
+        <div>
+          <div class="guest-name">${g.canonical_name}</div>
+          <div class="guest-room">Room ${g.room} · ${g.check_in?.split('T')[0]||''}</div>
+        </div>
+        <span class="flow-badge flow-${g.flow}">${g.flow?.replace(/_/g,' ')}</span>
+      </div>
+      <div class="guest-bio">${g.bio||''}</div>
+      ${alertsHtml ? '<div class="alerts-list">'+alertsHtml+'</div>' : ''}
+      <div class="hap-events-mini">
+        <div style="font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:#ccc;margin-bottom:4px;">HAP Events</div>
+        ${eventsHtml}
+      </div>
+    </div>`;
+}
+
+async function loadArrivals() {
+  const r = await fetch('/api/heart/v1/arrivals');
+  allGuests = await r.json();
+  document.getElementById('arrivals-grid').innerHTML = allGuests.map(g => guestCard(g)).join('');
+  const sel     = document.getElementById('chat-guest-select');
+  const emitSel = document.getElementById('emit-guest');
+  allGuests.forEach(g => {
+    sel.innerHTML     += `<option value="${g.guest_guid}">${g.canonical_name} — ${g.room}</option>`;
+    emitSel.innerHTML += `<option value="${g.guest_guid}">${g.canonical_name}</option>`;
+  });
+}
+
+async function loadInStay() {
+  const r = await fetch('/api/heart/v1/in-stay');
+  const guests = await r.json();
+  document.getElementById('instay-grid').innerHTML = guests.map(g => guestCard(g)).join('');
+}
+
+async function loadHumanQueue() {
+  const r = await fetch('/api/heart/v1/human-queue');
+  const items = await r.json();
+  const pending = items.filter(i => i.status === 'PENDING');
+  document.getElementById('queue-badge').textContent = pending.length || '0';
+  document.getElementById('queue-list').innerHTML = items.map(item => `
+    <div class="queue-item ${item.status==='RESOLVED'?'resolved':''}" style="background:var(--white);">
+      <div>
+        <div class="queue-priority ${item.status==='RESOLVED'?'resolved':''}">${item.status==='RESOLVED'?'Resolved':item.priority+' Priority'}</div>
+        <div class="queue-guest">${item.guest_name}</div>
+        <div class="queue-reason">${item.reason}</div>
+        <div class="queue-meta">Room ${item.room} · ${item.created_at?.split('T')[0]||''} ${item.created_at?.split('T')[1]?.slice(0,5)||''}</div>
+        ${item.assigned_to ? '<div class="queue-meta" style="color:var(--green);">Handled by '+item.assigned_to+'</div>' : ''}
+      </div>
+      ${item.status!=='RESOLVED' ? '<button class="btn btn-dark" onclick="resolveItem('+item.id+')">Mark Resolved</button>' : ''}
+    </div>`).join('');
+}
+
+async function resolveItem(id) {
+  const who = prompt('Resolved by:') || 'Staff';
+  await fetch('/api/heart/v1/human-queue/'+id+'/resolve', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({resolved_by:who})
+  });
+  loadHumanQueue(); loadMetrics();
+}
+
+async function loadHapEvents() {
+  const r = await fetch('/api/heart/v1/hap/events?limit=100');
+  const events = await r.json();
+  const log = document.getElementById('hap-events-log');
+  log.innerHTML = events.reverse().map(ev => `
+    <div class="hap-event-line">
+      <span class="hap-ts">${ev.ts?.replace('T',' ').slice(0,19)||''}</span>
+      <span class="hap-ev">${ev.event||''}</span>
+      <span class="hap-guid">${ev.guest_guid?.slice(0,20)||''}</span>
+      ${ev.detail ? '<span class="hap-det">→ '+ev.detail+'</span>' : ''}
+    </div>`).join('');
+  log.scrollTop = log.scrollHeight;
+}
+setInterval(loadHapEvents, 3000); loadHapEvents();
+
+async function emitEvent() {
+  const guest_guid = document.getElementById('emit-guest').value;
+  const event      = document.getElementById('emit-event').value;
+  const detail     = document.getElementById('emit-detail').value;
+  await fetch('/api/heart/v1/hap/emit', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({guest_guid, event, detail})
+  });
+  loadHapEvents();
+}
+
+const agentMeta = {
+  orchestrator: {name:'Orchestrator', role:'Pre-Arrival · HAP-RAG · Identity Resolution · Billing'},
+  shadow:       {name:'Shadow',       role:'In-Stay · Conversational Voice · Reserved Serendipity'},
+  thread:       {name:'Thread',       role:'Post-Stay · Memory Snapshot · KINDRED · WARDEN Seal'}
+};
+
+function selectAgent(name, el) {
+  currentAgent = name;
+  document.querySelectorAll('.agent-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('agent-display-name').textContent = agentMeta[name].name;
+  document.getElementById('agent-display-role').textContent = agentMeta[name].role;
+  document.getElementById('chat-messages').innerHTML =
+    '<div class="msg agent"><div class="msg-role">'+agentMeta[name].name+'</div><div class="msg-content">Activated. '+agentMeta[name].role+'. How may I assist?</div></div>';
+}
+
+// ── Guest Agent Chat ──────────────────────────────────────────
+let currentGuestGuid = null;
+let currentGuestName = '';
+
+async function loadAgentGuestList() {
+  const container = document.getElementById('agent-guest-list');
+  try {
+    const r = await fetch('/api/heart/v1/arrivals');
+    const guests = await r.json();
+    if (!guests.length) {
+      container.innerHTML = '<div style="color:var(--muted);font-size:12px;padding:16px;text-align:center;">No hay huéspedes activos.</div>';
+      return;
+    }
+    const FLOW_COLOR = { ARRIVING_TODAY:'var(--gold)', IN_STAY:'var(--green)', DEPARTING_TODAY:'var(--red)' };
+    container.innerHTML = guests.map(g => `
+      <div onclick="selectGuestForChat('${g.guest_guid}','${(g.canonical_name||'').replace(/'/g,"\\'")}','${g.room||''}','${g.status||''}')"
+           style="padding:12px 14px;margin-bottom:4px;border:1px solid var(--border2);cursor:pointer;border-radius:2px;transition:background .15s;"
+           onmouseover="this.style.background='var(--paper2)'" onmouseout="this.style.background=''"
+           id="guest-list-item-${g.guest_guid}">
+        <div style="font-family:'Cormorant Garamond',serif;font-size:15px;font-weight:400;color:var(--text);">${g.canonical_name||'Unknown'}</div>
+        <div style="font-size:9px;color:var(--muted);margin-top:2px;">Room ${g.room||'—'}</div>
+        <div style="font-size:9px;font-weight:500;color:${FLOW_COLOR[g.status]||'var(--muted)'};letter-spacing:1px;margin-top:2px;">${(g.status||'').replace(/_/g,' ')}</div>
+      </div>`).join('');
+  } catch(e) {
+    container.innerHTML = '<div style="color:var(--red);font-size:12px;padding:16px;">Error cargando huéspedes.</div>';
+  }
+}
+
+async function selectGuestForChat(guid, name, room, status) {
+  currentGuestGuid = guid;
+  currentGuestName = name;
+  document.querySelectorAll('[id^="guest-list-item-"]').forEach(el => el.style.borderColor = 'var(--border2)');
+  const item = document.getElementById('guest-list-item-'+guid);
+  if (item) item.style.borderColor = 'var(--gold)';
+  document.getElementById('agent-guest-name').textContent = name;
+  document.getElementById('agent-guest-meta').textContent = `Room ${room} · ${status.replace(/_/g,' ')} · Claude Haiku 4.5 · HAP`;
+  document.getElementById('chat-input').disabled = true;
+  document.getElementById('chat-send-btn').disabled = true;
+
+  const msgs = document.getElementById('chat-messages');
+  const STEPS = [
+    { label: 'Autenticando canal seguro HAP…',      delay: 0   },
+    { label: 'Verificando identidad del agente…',   delay: 600 },
+    { label: `Cargando perfil de ${name}…`,         delay: 1200 },
+    { label: 'Sincronizando eventos HAP…',           delay: 1800 },
+    { label: 'Handshake completado ✓',              delay: 2400, done: true },
+  ];
+
+  msgs.innerHTML = `<div id="handshake-box" style="margin:40px auto;width:340px;background:var(--dark);padding:24px 28px;font-family:monospace;">
+    <div style="font-size:9px;letter-spacing:3px;color:var(--gold-lt);text-transform:uppercase;margin-bottom:16px;">⬡ HEART · Agent Session Init</div>
+    <div id="handshake-steps" style="display:flex;flex-direction:column;gap:8px;"></div>
+  </div>`;
+
+  const stepsEl = document.getElementById('handshake-steps');
+  for (const step of STEPS) {
+    await new Promise(r => setTimeout(r, step.delay === 0 ? 0 : 600));
+    const line = document.createElement('div');
+    line.style.cssText = 'font-size:11px;color:#555;display:flex;align-items:center;gap:8px;';
+    line.innerHTML = step.done
+      ? `<span style="color:var(--gold);">▶</span><span style="color:#CCC;">${step.label}</span>`
+      : `<span style="color:#333;">·</span><span>${step.label}</span>`;
+    stepsEl.appendChild(line);
+    if (step.done) {
+      // Animate previous steps to green
+      stepsEl.querySelectorAll('div').forEach((el, i) => {
+        if (i < STEPS.length - 1) el.style.color = '#2A5C40';
+      });
+    }
+  }
+
+  // Call handshake endpoint
+  await new Promise(r => setTimeout(r, 400));
+  try {
+    const r = await fetch('/api/heart/v1/agents/guest-agent/handshake', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ guest_guid: guid })
+    });
+    const d = await r.json();
+    msgs.innerHTML = '';
+    const agentMsg = document.createElement('div');
+    agentMsg.className = 'msg agent';
+    agentMsg.innerHTML = `<div class="msg-role">⬡ Agente de ${name}</div><div class="msg-content">${d.response || 'Sesión iniciada.'}</div>`;
+    msgs.appendChild(agentMsg);
+    msgs.scrollTop = msgs.scrollHeight;
+  } catch(e) {
+    msgs.innerHTML = `<div style="color:var(--red);font-size:12px;padding:20px;">Error al iniciar sesión: ${e}</div>`;
+  }
+
+  document.getElementById('chat-input').disabled = false;
+  document.getElementById('chat-send-btn').disabled = false;
+  document.getElementById('chat-input').focus();
+}
+
+function quickAsk(text) {
+  if (!currentGuestGuid) return;
+  document.getElementById('chat-input').value = text;
+  sendChat();
+}
+
+async function sendChat() {
+  if (!currentGuestGuid) return;
+  const input = document.getElementById('chat-input');
+  const msg = input.value.trim();
+  if (!msg) return;
+  input.value = '';
+  const msgs = document.getElementById('chat-messages');
+  const userMsg = document.createElement('div');
+  userMsg.className = 'msg user';
+  userMsg.innerHTML = '<div class="msg-role">Hotel Staff</div><div class="msg-content">'+msg+'</div>';
+  const thinkEl = document.createElement('div');
+  thinkEl.className = 'msg agent';
+  thinkEl.id = 'ga-thinking';
+  thinkEl.innerHTML = '<div class="msg-role">⬡ Agente de '+currentGuestName+'</div><div class="msg-content" style="color:#bbb;font-style:italic;">Consultando perfil del huésped…</div>';
+  // Remove the placeholder if it's still there
+  const placeholder = msgs.querySelector('[style*="margin-top:40px"]');
+  if (placeholder) placeholder.remove();
+  msgs.appendChild(userMsg);
+  msgs.appendChild(thinkEl);
+  msgs.scrollTop = msgs.scrollHeight;
+  try {
+    const r = await fetch('/api/heart/v1/agents/guest-agent/chat', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ message: msg, guest_guid: currentGuestGuid })
+    });
+    const d = await r.json();
+    thinkEl.remove();
+    const agentMsg = document.createElement('div');
+    agentMsg.className = 'msg agent';
+    agentMsg.innerHTML = '<div class="msg-role">⬡ Agente de '+currentGuestName+'</div><div class="msg-content">'+(d.response||d.error||'Sin respuesta')+'</div>';
+    msgs.appendChild(agentMsg);
+    msgs.scrollTop = msgs.scrollHeight;
+  } catch(e) {
+    thinkEl.remove();
+    const errMsg = document.createElement('div');
+    errMsg.className = 'msg agent';
+    errMsg.innerHTML = '<div class="msg-role">Error</div><div class="msg-content" style="color:var(--red);">'+e+'</div>';
+    msgs.appendChild(errMsg);
+  }
+}
+
+// ── Dispute Modal ─────────────────────────────────────────────
+let _dm = {};
+const PLATFORM_INFO = {
+  'TripAdvisor': {
+    instructions: '📋 TripAdvisor permite solicitar la eliminación de una reseña por incumplimiento de políticas.\n\n1. Ve a tripadvisor.com → Log in como Management → encuentra la reseña → "Report a problem"\n2. Selecciona: "Inaccurate information" o "Blackmail or threats"\n3. Adjunta el WARDEN brief como evidencia en el campo de descripción.\n4. TripAdvisor responde en 5–10 días hábiles.\n\n⚠ También puedes responder públicamente — la carta generada sirve como Management Response.',
+    portal: 'https://www.tripadvisor.com/Owners',
+    portalLabel: '→ Abrir portal TripAdvisor'
+  },
+  'Google': {
+    instructions: '📋 Google permite marcar reseñas como inapropiadas y solicitar su revisión.\n\n1. Ve a Google Business Profile → Reseñas → encuentra la de Eleanor Voss → "Marcar como inapropiada"\n2. Motivo: "Conflicto de intereses" o "Información incorrecta"\n3. Copia la carta generada en el formulario de apelación.\n4. Google puede tardar 3–14 días.',
+    portal: 'https://business.google.com',
+    portalLabel: '→ Abrir Google Business Profile'
+  },
+  'Booking.com': {
+    instructions: '📋 Booking.com tiene un proceso de disputa vía Partner Hub.\n\n1. Accede a extranet.booking.com → Reseñas de huéspedes → localiza la reseña\n2. Click en "Contestar" o "Reportar" según corresponda\n3. Booking.com revisa en 72 horas.',
+    portal: 'https://extranet.booking.com',
+    portalLabel: '→ Abrir Booking Extranet'
+  },
+  'Trustpilot': {
+    instructions: '📋 Trustpilot permite disputar reseñas vía el Business Hub.\n\n1. business.trustpilot.com → Reseñas → "Flag review"\n2. Selecciona razón y adjunta evidencia WARDEN\n3. Respuesta en 5–7 días hábiles.',
+    portal: 'https://business.trustpilot.com',
+    portalLabel: '→ Abrir Trustpilot Business'
+  }
+};
+
+function openDisputeModal(guest, platform, seal, signedAt, review, brief) {
+  _dm = { guest, platform, seal, signedAt, review, brief };
+  const info = PLATFORM_INFO[platform] || PLATFORM_INFO['TripAdvisor'];
+  document.getElementById('dm-platform').textContent = platform;
+  document.getElementById('dm-instructions').textContent = info.instructions;
+  document.getElementById('dm-seal').textContent = `⬡ ${seal} · Firmado: ${signedAt} · Inmutable`;
+  document.getElementById('dm-letter').textContent = 'Haz click en "Generar carta con IA" para crear la carta de disputa personalizada…';
+  const linkBtn = document.getElementById('dm-link-btn');
+  linkBtn.textContent = info.portalLabel;
+  linkBtn.style.display = 'inline-flex';
+  document.getElementById('dm-copy-ok').style.display = 'none';
+  document.getElementById('dispute-modal').style.display = 'flex';
+}
+function closeDisputeModal() {
+  document.getElementById('dispute-modal').style.display = 'none';
+}
+function openPlatformPortal() {
+  const info = PLATFORM_INFO[_dm.platform] || {};
+  if (info.portal) window.open(info.portal, '_blank');
+}
+async function copyDispute() {
+  const text = document.getElementById('dm-letter').textContent;
+  await navigator.clipboard.writeText(text);
+  document.getElementById('dm-copy-ok').style.display = 'block';
+  setTimeout(() => document.getElementById('dm-copy-ok').style.display = 'none', 2500);
+}
+async function generateDisputeLetter() {
+  const btn = document.getElementById('dm-generate-btn');
+  btn.disabled = true; btn.textContent = 'Generando…';
+  document.getElementById('dm-letter').textContent = 'WARDEN generando carta formal de disputa…';
+  try {
+    const r = await fetch('/api/heart/v1/dispute-brief/formal-letter', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(_dm)
+    });
+    const d = await r.json();
+    document.getElementById('dm-letter').textContent = d.letter || d.error || 'Error';
+  } catch(e) {
+    document.getElementById('dm-letter').textContent = 'Error: ' + e.message;
+  } finally {
+    btn.disabled = false; btn.textContent = '⬡ Generar carta con IA';
+  }
+}
+
+async function generateBrief() {
+  const guest       = document.getElementById('d-guest').value;
+  const review      = document.getElementById('d-review').value;
+  const dates       = document.getElementById('d-dates').value;
+  const platform    = document.getElementById('d-platform').value;
+  const rating      = parseInt(document.getElementById('d-rating').value);
+  const agentAction = document.getElementById('d-agent-action').value;
+  if (!guest || !review) { alert('Guest name and review required.'); return; }
+
+  const result  = document.getElementById('brief-result');
+  const verdict = document.getElementById('brief-verdict-banner');
+  const btn     = document.getElementById('btn-generate-brief');
+  result.style.display = 'block';
+  verdict.style.cssText = 'padding:14px 20px;font-size:13px;font-weight:600;letter-spacing:2px;text-transform:uppercase;text-align:center;background:#1C1C1C;color:#888;';
+  verdict.textContent = '⬡ WARDEN analizando log inmutable…';
+  document.getElementById('brief-text').textContent = '';
+  document.getElementById('brief-seal').textContent = '';
+  btn.disabled = true;
+  btn.textContent = 'Analizando…';
+
+  try {
+    const r = await fetch('/api/heart/v1/dispute-brief/generate', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({guest_name:guest, review, stay_dates:dates, platform, rating, agent_action:agentAction})
+    });
+    const d = await r.json();
+
+    const verdictColors = {
+      VALID:   {bg:'#7A1F1F', color:'#FFDADA', label:'⚠ QUEJA VÁLIDA — El hotel no cumplió lo solicitado'},
+      PARTIAL: {bg:'#6B4E00', color:'#FFE9A0', label:'◈ QUEJA PARCIALMENTE VÁLIDA — Evidencia mixta'},
+      INVALID: {bg:'#2A5C40', color:'#AFFFCD', label:'✓ QUEJA INVÁLIDA — El log inmutable refuta la queja'},
+    };
+    const vc = verdictColors[d.verdict] || verdictColors.PARTIAL;
+    verdict.style.cssText = `padding:16px 20px;font-size:12px;font-weight:600;letter-spacing:2px;text-transform:uppercase;text-align:center;background:${vc.bg};color:${vc.color};`;
+    verdict.textContent = vc.label;
+    document.getElementById('brief-text').textContent = d.brief || d.error || 'Error';
+    document.getElementById('brief-seal').textContent = '⬡ '+d.warden_seal+' · '+new Date().toISOString()+' · Immutable';
+  } catch(e) {
+    verdict.textContent = 'Error: ' + e.message;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '⬡ Debatir validez de queja';
+  }
+}
+
+async function loadRooms() {
+  const r = await fetch('/api/heart/v1/rooms');
+  const rooms = await r.json();
+  const statusBg = {OCCUPIED:'#F0EDE8',READY:'#F0F8F2',PREPARING:'#FAF7EC',MAINTENANCE:'#FAF0F0'};
+  const statusLabel = {OCCUPIED:'Occupied',READY:'Ready',PREPARING:'Preparing',MAINTENANCE:'Maintenance'};
+  document.getElementById('rooms-grid').innerHTML = rooms.map(room => `
+    <div style="background:${statusBg[room.status]||'#FAFAF8'};padding:18px;cursor:pointer;"
+         onclick="alert('Room ${room.room_id}\n${room.type}\nCapacity: ${room.capacity}\nStatus: ${room.status}${room.occupant?'\nOccupant: '+room.occupant:''}')"
+         title="${room.type}">
+      <div style="font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:400;">${room.room_id}</div>
+      <div style="font-size:10px;color:var(--muted);margin-top:2px;">${room.type}</div>
+      <div style="font-size:9px;color:var(--muted);margin-top:4px;text-transform:uppercase;letter-spacing:1px;">${statusLabel[room.status]||room.status}</div>
+      ${room.occupant ? '<div style="font-size:10px;margin-top:8px;">'+room.occupant+'</div>' : ''}
+    </div>`).join('');
+}
+
+async function loadAgentBrain(agent) {
+  const r = await fetch('/api/heart/v1/agent-brain'+(agent?'?agent='+agent:''));
+  const brain = await r.json();
+  const log = document.getElementById('brain-log');
+  if (!brain.length) { log.innerHTML = '<div class="loading">No executions yet</div>'; return; }
+  const labels = {orchestrator:'Orchestrator',shadow:'Shadow',thread:'Thread'};
+  log.innerHTML = brain.slice(0,30).map(b => `
+    <div style="background:var(--white);padding:18px 20px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <div style="font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;">${labels[b.agent]||b.agent}</div>
+        <div style="font-size:10px;color:var(--muted);">${b.ts ? b.ts.split('T')[1]?.slice(0,5) : ''}</div>
+      </div>
+      <div style="background:var(--paper);padding:14px;border-left:2px solid var(--border);font-size:12px;line-height:1.7;color:#555;white-space:pre-wrap;">${b.reasoning}</div>
+    </div>`).join('');
+}
+
+async function loadROI() {
+  const roi    = await (await fetch('/api/heart/v1/roi-stats')).json();
+  const guests = await (await fetch('/api/heart/v1/guests')).json();
+  const queue  = await (await fetch('/api/heart/v1/human-queue')).json();
+  document.getElementById('roi-total-matters').textContent  = roi.total_interactions;
+  document.getElementById('roi-agent-resolved').textContent = roi.agent_resolved;
+  document.getElementById('roi-human-required').textContent = roi.human_escalated;
+  document.getElementById('roi-percentage').textContent     = Math.round(roi.agent_resolution_rate)+'%';
+  const agentList = guests.filter(g=>!g.human_required&&g.hap_events&&g.hap_events.length>0).slice(0,5).map(g=>`
+    <div style="background:var(--white);padding:16px 18px;border-left:2px solid var(--green);">
+      <div style="font-family:'Cormorant Garamond',serif;font-size:18px;">${g.canonical_name}</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:4px;">${g.flow||'GENERAL'} · ${g.hap_events.length} HAP events</div>
+      <div style="font-size:10px;color:var(--green);margin-top:6px;">${roi.avg_agent_time_min}min · $${roi.agent_cost_per?.toFixed(2)}</div>
+    </div>`).join('');
+  const humanList = queue.filter(q=>q.status==='PENDING').slice(0,5).map(q=>`
+    <div style="background:var(--white);padding:16px 18px;border-left:2px solid var(--red);">
+      <div style="font-family:'Cormorant Garamond',serif;font-size:18px;">${q.guest_name}</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:4px;">${q.reason?.slice(0,50)}</div>
+      <div style="font-size:10px;color:var(--red);margin-top:6px;">${roi.avg_human_time_min}min · $${roi.human_cost_per?.toFixed(2)}</div>
+    </div>`).join('');
+  document.getElementById('roi-agent-list').innerHTML = agentList||'<div class="loading">No agent-resolved matters</div>';
+  document.getElementById('roi-human-list').innerHTML = humanList||'<div class="loading">No escalations</div>';
+}
+
+let launcherAgent = 'orchestrator';
+let launcherExecCount = 0;
+
+async function initLauncher() {
+  const guests = await (await fetch('/api/heart/v1/guests')).json();
+  const select = document.getElementById('launcher-guest');
+  select.innerHTML = '<option value="">Select guest...</option>' +
+    guests.map(g=>`<option value="${g.guest_guid}">${g.canonical_name} · ${g.flow}</option>`).join('');
+}
+
+function setLauncherAgent(agent) {
+  launcherAgent = agent;
+  const map = {orchestrator:'btn-orch',shadow:'btn-shadow',thread:'btn-thread'};
+  ['btn-orch','btn-shadow','btn-thread'].forEach(id => {
+    const btn = document.getElementById(id);
+    if (!btn) return;
+    const active = id === map[agent];
+    btn.style.background = active ? 'var(--gold)' : '#111';
+    btn.style.color      = active ? 'var(--black)' : '#555';
+    btn.style.fontWeight = active ? '600' : '400';
+  });
+}
+
+async function launchAgent() {
+  const guestGuid = document.getElementById('launcher-guest').value;
+  if (!guestGuid) { log('Select a guest first'); return; }
+  clearReasoning();
+  log('Launching '+launcherAgent.toUpperCase()+'…');
+  try {
+    const res = await fetch('/api/heart/v1/agents/launch', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({agent:launcherAgent, guest_guid:guestGuid, trigger:'live'})
+    });
+    await displayExecution(await res.json());
+  } catch(e) { log('Error: '+e.message); }
+}
+
+async function orchestrateGuest() {
+  const guestGuid = document.getElementById('launcher-guest').value;
+  if (!guestGuid) { log('Select a guest first'); return; }
+  clearReasoning();
+  log('Running full orchestration…');
+  try {
+    const res = await fetch('/api/heart/v1/agents/orchestrate', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({guest_guid:guestGuid})
+    });
+    const result = await res.json();
+    log(result.sequence.length+' agents executed');
+    for (const agent of result.sequence) { log('— '+agent.agent+' —'); await displayExecution(agent, false); }
+  } catch(e) { log('Error: '+e.message); }
+}
+
+async function displayExecution(result, clearFirst=true) {
+  if (clearFirst) clearReasoning();
+  launcherExecCount++;
+  log(result.agent+' → '+result.status);
+  const container = document.getElementById('launcher-reasoning');
+  for (const step of (result.reasoning_chain||[])) {
+    const isAlert = step.includes('⚠')||step.includes('ERROR');
+    const isOk    = step.includes('✓')||step.includes('COMPLETED');
+    const bg      = isAlert ? '#FEF5F5' : isOk ? '#F0F8F4' : 'var(--white)';
+    const border  = isAlert ? 'var(--red)' : isOk ? 'var(--green)' : 'var(--border)';
+    const color   = isAlert ? 'var(--red)' : isOk ? 'var(--green)' : 'var(--text)';
+    const div = document.createElement('div');
+    div.style.cssText = 'padding:10px 14px;border-left:2px solid '+border+';background:'+bg+';font-size:12px;line-height:1.5;color:'+color+';opacity:0;transition:opacity .2s;';
+    div.textContent = step;
+    container.appendChild(div);
+    await new Promise(r=>setTimeout(r,80));
+    div.style.opacity = '1';
+    container.scrollTop = container.scrollHeight;
+  }
+}
+
+function clearReasoning() {
+  document.getElementById('launcher-reasoning').innerHTML = '';
+}
+
+function log(msg) {
+  const output = document.getElementById('launcher-output');
+  if (!output) return;
+  const time = new Date().toLocaleTimeString('en',{hour12:false});
+  const div  = document.createElement('div');
+  div.style.cssText = 'padding:2px 0;border-bottom:1px solid rgba(255,255,255,.03);';
+  div.innerHTML = '<span style="color:#2A2A2A;">['+time+']</span> <span style="color:#666;">'+msg+'</span>';
+  output.appendChild(div);
+  output.scrollTop = output.scrollHeight;
+}
+
+loadArrivals();
+loadInStay();
+loadHumanQueue();
+loadRooms();
+loadROI();
+initLauncher();
+</script>
+</body>
+</html>

@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HEART Platform — Rosewood Sand Hill</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&family=Inter:wght@300;400;500;600&display=swap');
+
+  :root {
+    --black:   #0A0A0A;
+    --dark:    #1C1C1C;
+    --white:   #FFFFFF;
+    --paper:   #FAF9F7;
+    --paper2:  #F4F2EF;
+    --border:  #E5E0D8;
+    --border2: #EDE9E3;
+    --muted:   #9A9189;
+    --text:    #111111;
+    --gold:    #B09050;
+    --gold-lt: #C8A96E;
+    --green:   #2A5C40;
+    --red:     #7A1F1F;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--paper);
+    color: var(--text);
+    height: 100vh;
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    grid-template-rows: 58px 1fr;
+    overflow: hidden;
+  }
+  header {
+    grid-column: 1 / 3;
+    background: var(--black);
+    color: var(--white);
+    padding: 0 28px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid #222;
+  }
+  .brand { display: flex; align-items: baseline; gap: 14px; }
+  .brand-logo {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px; font-weight: 300;
+    letter-spacing: 5px; text-transform: uppercase;
+  }
+  .brand-sub {
+    font-size: 9px; font-weight: 300;
+    letter-spacing: 3px; text-transform: uppercase;
+    color: var(--gold-lt);
+  }
+  .live { display: flex; align-items: center; gap: 14px; font-size: 10px; color: rgba(255,255,255,.55); letter-spacing: 1.5px; }
+  .live-dot { width: 6px; height: 6px; background: #4CAF50; border-radius: 50%; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+  .metric-pill { font-size: 10px; color: rgba(255,255,255,.7); letter-spacing: 1.2px; }
+  .metric-pill b { color: var(--gold-lt); font-weight: 500; font-family: 'Cormorant Garamond', serif; font-size: 14px; margin-right: 4px; }
+
+  aside {
+    background: var(--white);
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    padding: 18px 0;
+  }
+  .group-label {
+    font-size: 9px; letter-spacing: 2.5px; text-transform: uppercase;
+    color: var(--muted); padding: 14px 22px 6px;
+  }
+  .nav-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 11px 22px;
+    font-size: 12px; letter-spacing: 0.5px;
+    color: #555; cursor: pointer;
+    border-left: 2px solid transparent;
+    transition: background .12s, color .12s, border-color .12s;
+  }
+  .nav-item:hover { background: var(--paper2); color: var(--text); }
+  .nav-item.active {
+    background: var(--paper2);
+    color: var(--text);
+    border-left-color: var(--gold);
+    font-weight: 500;
+  }
+  .source-tag {
+    font-size: 8px; letter-spacing: 1.5px; text-transform: uppercase;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    padding: 1px 6px;
+    border-radius: 2px;
+  }
+  .nav-item.active .source-tag { border-color: var(--gold); color: var(--gold); }
+
+  main {
+    background: var(--white);
+    overflow: hidden;
+    position: relative;
+  }
+  .frame-wrap {
+    position: absolute;
+    inset: 0;
+    display: none;
+  }
+  .frame-wrap.active { display: block; }
+  .frame-wrap iframe {
+    width: 100%; height: 100%;
+    border: none;
+    background: var(--white);
+  }
+  .footer-status {
+    position: absolute;
+    bottom: 8px; right: 12px;
+    font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase;
+    color: var(--muted);
+    background: rgba(255,255,255,.95);
+    padding: 4px 10px;
+    border: 1px solid var(--border);
+    pointer-events: none;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="brand-logo">Rosewood</div>
+    <div class="brand-sub">HEART Platform · Sand Hill</div>
+  </div>
+  <div class="live">
+    <span class="metric-pill"><b id="m-total">—</b>in residence</span>
+    <span class="metric-pill"><b id="m-human">—</b>matters</span>
+    <span class="metric-pill"><b id="m-asc">—</b>ASC</span>
+    <span class="metric-pill"><b id="m-hap">—</b>HAP</span>
+    <div class="live-dot"></div>
+    <span id="clock"></span>
+  </div>
+</header>
+
+<aside>
+  {% set groups = {} %}
+  {% for m in modules %}
+    {% set _ = groups.setdefault(m.group, []).append(m) %}
+  {% endfor %}
+  {% for group, items in groups.items() %}
+    <div class="group-label">{{ group }}</div>
+    {% for m in items %}
+      <div class="nav-item{% if loop.first and group == 'Front-of-house' %} active{% endif %}"
+           data-module="{{ m.id }}"
+           onclick="selectModule('{{ m.id }}', this)">
+        <span>{{ m.label }}</span>
+        <span class="source-tag">{{ m.source }}</span>
+      </div>
+    {% endfor %}
+  {% endfor %}
+</aside>
+
+<main>
+  {% for m in modules %}
+    <div class="frame-wrap{% if loop.first %} active{% endif %}" id="frame-{{ m.id }}">
+      <iframe data-src="{{ m.src }}"{% if loop.first %} src="{{ m.src }}"{% endif %}
+              allow="clipboard-read; clipboard-write"></iframe>
+    </div>
+  {% endfor %}
+  <div class="footer-status" id="upstream-status">checking upstreams…</div>
+</main>
+
+<script>
+function selectModule(id, el) {
+  if (!el) el = document.querySelector(`.nav-item[data-module="${id}"]`);
+  if (!el) return;
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  el.classList.add('active');
+  document.querySelectorAll('.frame-wrap').forEach(f => f.classList.remove('active'));
+  const target = document.getElementById('frame-'+id);
+  target.classList.add('active');
+  // Lazy-load iframe src on first activation
+  const iframe = target.querySelector('iframe');
+  if (!iframe.src && iframe.dataset.src) iframe.src = iframe.dataset.src;
+  // Persist
+  try { localStorage.setItem('heart-platform-active', id); } catch(e) {}
+  // Update URL hash so deep-link works
+  history.replaceState(null, '', '#'+id);
+}
+
+// Iframes can request navigation by posting {type:'heart-platform:navigate', module:'<id>'}.
+// Also reset the source iframe back to its canonical entry URL so we don't leave it stuck on a stale page.
+window.addEventListener('message', (ev) => {
+  const data = ev.data || {};
+  if (data.type !== 'heart-platform:navigate' || !data.module) return;
+  // Reset the iframe that sent the message back to its canonical src
+  document.querySelectorAll('.frame-wrap iframe').forEach(f => {
+    if (f.contentWindow === ev.source) {
+      const canonical = f.dataset.src;
+      if (canonical && f.src !== canonical) f.src = canonical;
+    }
+  });
+  selectModule(data.module);
+});
+
+// Restore last view (from hash > localStorage > default)
+(function restore() {
+  const fromHash = (location.hash || '').replace('#','');
+  let target = fromHash;
+  if (!target) { try { target = localStorage.getItem('heart-platform-active') || ''; } catch(e) {} }
+  if (target) {
+    const navEl = document.querySelector(`.nav-item[data-module="${target}"]`);
+    if (navEl) selectModule(target, navEl);
+  }
+})();
+
+// Clock
+function tick() {
+  document.getElementById('clock').textContent =
+    new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:false}) + ' PST';
+}
+setInterval(tick, 30000); tick();
+
+// Header metrics (poll the platform's aggregator)
+async function refreshMetrics() {
+  try {
+    const r = await fetch('/api/metrics');
+    if (!r.ok) return;
+    const d = await r.json();
+    document.getElementById('m-total').textContent = d.total_in_stay ?? '—';
+    document.getElementById('m-human').textContent = d.human_required ?? '—';
+    document.getElementById('m-asc').textContent   = d.asc_score ?? '—';
+    document.getElementById('m-hap').textContent   = d.hap_uptime ?? '—';
+  } catch(e) {}
+}
+setInterval(refreshMetrics, 10000); refreshMetrics();
+
+// Upstream health
+async function refreshHealth() {
+  try {
+    const d = await (await fetch('/api/health')).json();
+    const ops  = d.ops  === 'ok' ? '✓' : '✗';
+    const luis = d.luis === 'ok' ? '✓' : '✗';
+    document.getElementById('upstream-status').textContent = `ops ${ops}  ·  dashboard ${luis}`;
+  } catch(e) {
+    document.getElementById('upstream-status').textContent = 'platform offline';
+  }
+}
+setInterval(refreshHealth, 15000); refreshHealth();
+</script>
+</body>
+</html>
