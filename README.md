@@ -118,9 +118,6 @@ Open standard for agent-to-property communication. Components:
 - `HAP-BIOMETRIC` — hardware-attested identity verification at check-in
 - `HAP-RAG` — brand and SOP knowledge per property
 
-The protocol draft will be published as a separate open repository under
-Apache 2.0. HEART is the first reference implementation.
-
 ---
 
 ## About ARCA (Pre-existing Platform)
