@@ -41,3 +41,4 @@ server/data/guests/telegram_*.json
 
 # Local Claude
 .claude/local/
+server/data/guest_memories/

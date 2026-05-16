@@ -1,0 +1,117 @@
+{
+  "_schema": "hap-flow-profile-config/v0.1",
+  "_description": "Each flow profile carries interaction intensity, preferred channels, and alert caps. The guest agent uses this to decide HOW the property should reach the guest within each mode — and the property's concierge agent respects it.",
+
+  "General": {
+    "interaction_intensity": "standard",
+    "channels_preferred": ["email", "in_person"],
+    "channels_avoided": [],
+    "alert_cap_per_day": 3,
+    "quiet_hours_local": ["22:00", "07:00"],
+    "proactive_offers": "selective",
+    "upsell_allowed": true,
+    "human_required": []
+  },
+
+  "Corporate": {
+    "interaction_intensity": "minimal",
+    "channels_preferred": ["email"],
+    "channels_avoided": ["voice", "push"],
+    "alert_cap_per_day": 2,
+    "quiet_hours_local": ["21:30", "06:30"],
+    "proactive_offers": "essentials_only",
+    "upsell_allowed": true,
+    "upsell_categories": ["pressing", "car_service", "late_checkout"],
+    "human_required": []
+  },
+
+  "Bleisure": {
+    "interaction_intensity": "minimal_to_standard",
+    "channels_preferred": ["email", "telegram"],
+    "channels_avoided": ["voice"],
+    "alert_cap_per_day": 3,
+    "quiet_hours_local": ["22:00", "07:00"],
+    "proactive_offers": "weekend_pivot",
+    "upsell_allowed": true,
+    "upsell_categories": ["local_experiences", "wine_country", "spa"],
+    "human_required": []
+  },
+
+  "Special Dates": {
+    "interaction_intensity": "engaged",
+    "channels_preferred": ["in_person", "voice", "telegram"],
+    "channels_avoided": [],
+    "alert_cap_per_day": 5,
+    "quiet_hours_local": ["23:30", "08:00"],
+    "proactive_offers": "memorable",
+    "upsell_allowed": "experiential_only",
+    "human_required": ["surprise_orchestration"]
+  },
+
+  "Wellness / Recovery": {
+    "interaction_intensity": "silent",
+    "channels_preferred": ["email"],
+    "channels_avoided": ["push", "voice", "in_room_phone"],
+    "alert_cap_per_day": 1,
+    "quiet_hours_local": ["20:00", "09:00"],
+    "proactive_offers": "wellness_only",
+    "upsell_allowed": "deep_wellness_only",
+    "human_required": []
+  },
+
+  "VIP-Discrete": {
+    "interaction_intensity": "invisible",
+    "channels_preferred": ["in_person_pre_arranged"],
+    "channels_avoided": ["email", "telegram", "push", "voice"],
+    "alert_cap_per_day": 0,
+    "quiet_hours_local": ["00:00", "23:59"],
+    "proactive_offers": "none",
+    "upsell_allowed": false,
+    "human_required": ["identity_verification", "movement_coordination"]
+  },
+
+  "Family with Minors": {
+    "interaction_intensity": "companion",
+    "channels_preferred": ["email", "in_person"],
+    "channels_avoided": ["push_to_minors"],
+    "alert_cap_per_day": 4,
+    "quiet_hours_local": ["20:30", "07:30"],
+    "proactive_offers": "family_only",
+    "upsell_allowed": "family_experiences_only",
+    "human_required": ["check_in", "minor_documentation", "pool_alcohol_protocol"]
+  },
+
+  "Group / Wedding Party": {
+    "interaction_intensity": "engaged",
+    "channels_preferred": ["master_account_holder_only", "telegram_group"],
+    "channels_avoided": [],
+    "alert_cap_per_day": 6,
+    "quiet_hours_local": ["00:30", "08:00"],
+    "proactive_offers": "coordinated_group",
+    "upsell_allowed": true,
+    "upsell_categories": ["photography", "transfers", "coordinated_late_checkout"],
+    "human_required": ["lead_guest_coordination"]
+  },
+
+  "Medical / Compassionate": {
+    "interaction_intensity": "silent",
+    "channels_preferred": ["email", "trained_human"],
+    "channels_avoided": ["voice", "push", "upsell"],
+    "alert_cap_per_day": 1,
+    "quiet_hours_local": ["20:00", "09:00"],
+    "proactive_offers": "none",
+    "upsell_allowed": false,
+    "human_required": ["compassionate_care_brief"]
+  },
+
+  "Transit / Layover": {
+    "interaction_intensity": "minimal",
+    "channels_preferred": ["push"],
+    "channels_avoided": ["voice"],
+    "alert_cap_per_day": 2,
+    "quiet_hours_local": [],
+    "proactive_offers": "recovery_only",
+    "upsell_allowed": "recovery_only",
+    "human_required": []
+  }
+}

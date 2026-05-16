@@ -41,7 +41,7 @@ from telegram.ext import (  # noqa: E402
     filters,
 )
 
-from server import audit, guest_agent, sessions  # noqa: E402
+from server import audit, guest_agent, guest_memory, sessions  # noqa: E402
 from server.tools import (  # noqa: E402
     arrival as arrival_tool,
     checkout as checkout_tool,
@@ -1159,6 +1159,60 @@ async def _handle_confirm_outcome(query, ctx: ContextTypes.DEFAULT_TYPE, chat_id
             "label": f"Staff brief delivered · {arrival_result.flow_profile}",
         }
     )
+
+    # === Generate the portable guest.md and send it back to the guest ===
+    profile = guest_agent.get_profile(chat_id)
+    md = guest_memory.generate_guest_md(
+        profile=profile,
+        history=[],
+        persona_id=profile.get("persona_id"),
+        last_stay={
+            "property_name": "Rosewood Sand Hill",
+            "stay_id": arrival_result.stay_id,
+            "flow_profile": arrival_result.flow_profile,
+        },
+    )
+    guest_memory.save_guest_md(chat_id, md)
+    audit.append(
+        event="HAP.GUEST_MEMORY.REFINED",
+        guest_id=guest_id,
+        scope=["portability"],
+        extra={"chat_id": chat_id, "stay_id": arrival_result.stay_id},
+    )
+    emit_event(
+        {
+            "ts": _now_iso(),
+            "kind": "guest_memory_refined",
+            "chat_id": chat_id,
+            "label": "guest.md refined and returned to the guest",
+        }
+    )
+
+    # Send as a real .md attachment to Telegram
+    try:
+        from io import BytesIO  # local import — only needed here
+        from telegram import InputFile
+
+        doc = InputFile(BytesIO(md.encode("utf-8")), filename="guest.md")
+        await ctx.bot.send_document(
+            chat_id=chat_id,
+            document=doc,
+            caption=(
+                "📒 *Your guest.md*\n\n"
+                "This is _your_ memory file. It travels with you. Your agent reads it "
+                "on every future handshake and refines it after every stay. "
+                "Rosewood doesn't keep a copy."
+            ),
+            parse_mode=ParseMode.MARKDOWN,
+        )
+    except Exception as exc:  # noqa: BLE001
+        # Fallback: send as a plain (possibly truncated) message
+        snippet = md[:3500] + ("\n\n…(truncated)" if len(md) > 3500 else "")
+        await ctx.bot.send_message(
+            chat_id=chat_id, text=f"📒 *Your guest.md*\n\n```\n{snippet}\n```",
+            parse_mode=ParseMode.MARKDOWN,
+        )
+        print(f"[telegram] guest.md send_document failed, sent as text: {exc}")
 
     _pending_outcomes.pop(chat_id, None)
 

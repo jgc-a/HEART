@@ -8,6 +8,7 @@ import { TelegramPanel } from "@/components/TelegramPanel";
 import { LiveGuestAgent } from "@/components/LiveGuestAgent";
 import { A2AConversation } from "@/components/A2AConversation";
 import { ConnectedAgents } from "@/components/ConnectedAgents";
+import { GuestMemoryViewer } from "@/components/GuestMemoryViewer";
 import { Button } from "@/components/ui/button";
 
 export default function HapConsolePage() {
@@ -49,8 +50,13 @@ export default function HapConsolePage() {
       </div>
 
       {/* live A2A — the two Claudes talking via the HAP tools */}
-      <div className="mb-7">
+      <div className="mb-5">
         <A2AConversation />
+      </div>
+
+      {/* guest.md — portable memory owned by the guest */}
+      <div className="mb-7">
+        <GuestMemoryViewer />
       </div>
 
       {/* main comm chain */}
