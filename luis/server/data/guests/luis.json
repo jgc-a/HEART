@@ -1,0 +1,194 @@
+{
+  "guest_guid": "hap-guid-018f-luis-001",
+  "canonical_name": "Luis Vargas Fernandez",
+  "name_variants": ["Luis Vargas", "Luis V.", "L. Vargas Fernandez"],
+  "flow_profile_hint": "bleisure",
+  "arrival": {
+    "date": "2026-05-18",
+    "checkout_date": "2026-05-24",
+    "nights": 6,
+    "origin_city": "Mexico City",
+    "origin_iata": "MEX",
+    "destination_iata": "SFO",
+    "carrier": "American Airlines",
+    "flight_number": "AA1234",
+    "lands_local": "2026-05-18T16:30:00-07:00",
+    "lands_terminal": "SFO Terminal 2",
+    "transport_to_property": "car_service_requested",
+    "estimated_arrival_at_property": "2026-05-18T17:45:00-07:00",
+    "party_size": 1,
+    "luggage": {
+      "checked_bags": 1,
+      "carry_on": 1,
+      "fragile": false
+    }
+  },
+  "preferences": {
+    "lodging": {
+      "mattress": "firm",
+      "pillows": { "firm": 2, "medium": 1 },
+      "lighting_bias": "dim",
+      "lighting_scene_preset": "Evening Calm",
+      "room_temperature_f": 68,
+      "room_temperature_c": 20,
+      "sound": {
+        "ambient_playlist": "jazz",
+        "volume": "low",
+        "preferred_at_arrival": true
+      },
+      "blackout": "full",
+      "floor_preference": "high",
+      "view_preference": "garden_or_hills",
+      "bathrobe_size": "L",
+      "slippers_size": "10_us"
+    },
+    "dietary": {
+      "restrictions": ["no_shellfish"],
+      "allergies": [],
+      "preferences": ["lighter_dinner", "fresh_seasonal"],
+      "beverages": {
+        "tea": {
+          "matcha": {
+            "origin": "Uji",
+            "grade": "ceremonial",
+            "preparation": "whisk_with_chasen",
+            "temperature_c": 75
+          }
+        },
+        "coffee": "espresso_double",
+        "water_still": "Mountain_Valley",
+        "alcohol": "moderate"
+      }
+    },
+    "cultural": {
+      "languages": ["es", "en"],
+      "language_default": "en",
+      "language_warmth": "es",
+      "register_business": "formal_english",
+      "register_personal": "warm_spanish",
+      "nationality": "MX",
+      "timezone_home": "America/Mexico_City"
+    },
+    "wellness": {
+      "spa_interest": "deep_tissue_back",
+      "fitness": ["walking", "hiking"],
+      "sleep": {
+        "target_hours": 7,
+        "white_noise": false
+      }
+    }
+  },
+  "calendar": {
+    "conflicts": [
+      {
+        "date": "2026-05-18",
+        "type": "arrival_day_blocked",
+        "note": "Light dinner, no early calls."
+      },
+      {
+        "date": "2026-05-19",
+        "start": "10:00",
+        "end": "11:30",
+        "type": "external_meeting",
+        "location": "Andreessen Horowitz, 2865 Sand Hill Rd",
+        "tone": "professional"
+      },
+      {
+        "date": "2026-05-20",
+        "start": "14:00",
+        "end": "16:00",
+        "type": "external_meeting",
+        "location": "Sequoia Capital, 2800 Sand Hill Rd",
+        "patio_request": "Patio Sur reserved (guest's external meeting)",
+        "tone": "professional"
+      },
+      {
+        "date": "2026-05-21",
+        "start": "09:30",
+        "end": "11:00",
+        "type": "external_meeting",
+        "location": "Founders Fund, Presidio SF",
+        "tone": "professional"
+      },
+      {
+        "date": "2026-05-22",
+        "type": "leisure_pivot",
+        "note": "Weekend begins. Discovery mode activated."
+      },
+      {
+        "date": "2026-05-23",
+        "type": "leisure",
+        "note": "Wine country day suggested."
+      }
+    ]
+  },
+  "health": {
+    "context": "Chronic lower back pain. Firm mattress and ergonomic desk requested. No medication needed at property.",
+    "opt_in": true,
+    "scope_consent_required": true
+  },
+  "family": {
+    "signals": null,
+    "opt_in": false
+  },
+  "billing": {
+    "split": [
+      {
+        "range": "2026-05-18..2026-05-20",
+        "method": "corporate",
+        "billing_entity": "B-Drive IT",
+        "billing_contact": "luis@b-drive.com.mx",
+        "auth_token": "hap_billing_tok_corp_b9f2"
+      },
+      {
+        "range": "2026-05-21..2026-05-24",
+        "method": "personal",
+        "card_brand": "Amex Platinum",
+        "card_last4": "1004",
+        "auth_token": "hap_billing_tok_pers_4a17"
+      }
+    ],
+    "incidentals_card": "Amex Platinum 1004",
+    "pre_authorization_usd": 1500
+  },
+  "loyalty": {
+    "programs": [
+      {
+        "name": "Rosewood Elite",
+        "tier": "Gold",
+        "member_id": "RE-018F-LV"
+      },
+      {
+        "name": "Amex Platinum",
+        "tier": "Platinum",
+        "perks": ["FHR", "Marriott Bonvoy Gold transferred"]
+      },
+      {
+        "name": "Virtuoso",
+        "tier": "Member",
+        "advisor": "Maria Castellanos Travel"
+      }
+    ]
+  },
+  "identity": {
+    "verified": true,
+    "method": "passport+nfc",
+    "passport_issuer": "MX",
+    "biometric_enrolled": false
+  },
+  "consent_default_scope": [
+    "arrival.date_and_flight",
+    "preferences.lodging",
+    "preferences.dietary",
+    "preferences.cultural",
+    "calendar.conflicts",
+    "billing.method",
+    "loyalty.programs"
+  ],
+  "consent_optional_scope": [
+    "health.context",
+    "family.signals"
+  ],
+  "default_ttl_hours": 72,
+  "notes_for_concierge": "Bilingual. Use English in formal moments, Spanish for warmth. Likes a calm arrival, jazz playing low. Patio Sur on Wednesday is non-negotiable."
+}

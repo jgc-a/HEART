@@ -1,0 +1,196 @@
+{
+  "guest_guid": "hap-guid-018f-johnson-004",
+  "canonical_name": "Mark and Sarah Johnson",
+  "name_variants": ["Mark Johnson", "Sarah Johnson", "The Johnson Family"],
+  "flow_profile_hint": "family_with_minors",
+  "human_check_in_required": true,
+  "rule_invoked": "HAP-RULE 4.3 — Minors in party. Check-in by human, documentary verification.",
+  "arrival": {
+    "date": "2026-05-30",
+    "checkout_date": "2026-06-04",
+    "nights": 5,
+    "origin_city": "Los Angeles",
+    "origin_iata": "LAX",
+    "destination_iata": "SFO",
+    "carrier": "Southwest Airlines",
+    "flight_number": "WN1234",
+    "lands_local": "2026-05-30T14:20:00-07:00",
+    "lands_terminal": "SFO Terminal 1",
+    "transport_to_property": "family_suv_pre_booked",
+    "estimated_arrival_at_property": "2026-05-30T15:45:00-07:00",
+    "party_size": 4,
+    "party": [
+      {
+        "name": "Mark Johnson",
+        "role": "parent",
+        "age": 38,
+        "passport_issuer": "US"
+      },
+      {
+        "name": "Sarah Johnson",
+        "role": "parent",
+        "age": 36,
+        "passport_issuer": "US"
+      },
+      {
+        "name": "Emma Johnson",
+        "role": "minor",
+        "age": 8,
+        "dietary": ["vegetarian"],
+        "allergies": ["tree_nuts", "peanuts"],
+        "allergy_severity": "critical_anaphylactic",
+        "epipen_carried": true,
+        "passport_issuer": "US"
+      },
+      {
+        "name": "Liam Johnson",
+        "role": "minor",
+        "age": 5,
+        "dietary": [],
+        "allergies": [],
+        "passport_issuer": "US"
+      }
+    ],
+    "luggage": {
+      "checked_bags": 4,
+      "carry_on": 4,
+      "fragile": false,
+      "stroller": false
+    }
+  },
+  "preferences": {
+    "lodging": {
+      "room_configuration": "connecting_rooms_or_family_suite",
+      "mattress": "medium",
+      "pillows": { "firm": 2, "medium": 4, "kids_size": 2 },
+      "lighting_bias": "warm",
+      "lighting_scene_preset": "Family Evening",
+      "room_temperature_f": 70,
+      "room_temperature_c": 21,
+      "child_safety": {
+        "outlet_covers": true,
+        "corner_bumpers_requested": false,
+        "balcony_lock_engaged": true,
+        "bath_safety_mat": true
+      },
+      "amenities": {
+        "kids_welcome_kit": true,
+        "rosewood_teddy_bears": 2,
+        "age_appropriate": {
+          "emma_8": ["coloring_book", "crayons", "puzzle"],
+          "liam_5": ["plush", "picture_book", "kid_friendly_snack"]
+        },
+        "kids_bathrobes_size_xs_s": 2,
+        "kids_slippers_size_us_2_and_us_11k": true,
+        "stroller_in_room": false
+      },
+      "sound": {
+        "ambient_playlist": "soft_acoustic",
+        "volume": "low"
+      },
+      "blackout": "moderate",
+      "view_preference": "garden_safe"
+    },
+    "dietary": {
+      "household": {
+        "restrictions": [],
+        "allergies": ["tree_nuts (Emma — anaphylactic)", "peanuts (Emma — anaphylactic)"],
+        "kitchen_alert_required": true,
+        "epipen_location_communicated_to_staff": "Family suite + Madera reception + Pool deck"
+      },
+      "children_menu_activated": true,
+      "emma": {
+        "vegetarian": true,
+        "no_nuts_or_seeds": true,
+        "preferences": ["pasta", "fruit", "cheese_pizza"]
+      },
+      "liam": {
+        "no_restrictions": true,
+        "preferences": ["chicken_tenders", "fruit", "pancakes_morning"]
+      },
+      "parents": {
+        "alcohol_in_pool_area_with_minors_present": "DISALLOWED per HAP-FLOW 7"
+      }
+    },
+    "cultural": {
+      "languages": ["en"],
+      "language_default": "en",
+      "register": "warm_family",
+      "nationality": "US"
+    },
+    "wellness": {
+      "spa_interest": "one_couples_treatment_evening_with_kids_club",
+      "fitness": ["pool", "kids_pool"]
+    }
+  },
+  "calendar": {
+    "conflicts": [
+      {
+        "date": "2026-05-31",
+        "type": "leisure",
+        "note": "Suggest Filoli Gardens family experience."
+      },
+      {
+        "date": "2026-06-01",
+        "type": "leisure",
+        "note": "Pool day, kids amenities active."
+      },
+      {
+        "date": "2026-06-02",
+        "start": "18:00",
+        "end": "20:30",
+        "type": "couples_dinner_kids_club",
+        "location": "Madera (parents) + Kids Club (Emma + Liam)",
+        "consent_required": "parental_authorization_form"
+      }
+    ]
+  },
+  "health": {
+    "context": "Emma has anaphylactic tree nut and peanut allergy. EpiPen carried by family at all times. Madera kitchen on alert. Pool deck on alert.",
+    "opt_in": true,
+    "scope_consent_required": true,
+    "criticality": "high"
+  },
+  "family": {
+    "signals": "First international family trip in 2 years. Parents traveling with two young children. Emotionally meaningful trip — treat as gentle milestone, not a generic family stay.",
+    "opt_in": true,
+    "scope_consent_required": true
+  },
+  "billing": {
+    "method": "personal",
+    "card_brand": "Amex Platinum",
+    "card_last4": "8862",
+    "auth_token": "hap_billing_tok_pers_j5d3",
+    "incidentals_card": "Amex Platinum 8862",
+    "pre_authorization_usd": 3000
+  },
+  "loyalty": {
+    "programs": [
+      {
+        "name": "Amex Platinum",
+        "tier": "Platinum",
+        "perks": ["FHR", "Marriott Bonvoy Gold transferred"]
+      }
+    ]
+  },
+  "identity": {
+    "verified": true,
+    "method": "passport_documentary_verification_at_check_in",
+    "passport_issuer": "US",
+    "biometric_enrolled": false,
+    "minor_documentary_verification_required": true
+  },
+  "consent_default_scope": [
+    "arrival.date_and_flight",
+    "preferences.lodging",
+    "preferences.dietary",
+    "calendar.conflicts",
+    "billing.method",
+    "loyalty.programs",
+    "family.signals",
+    "health.context"
+  ],
+  "consent_optional_scope": [],
+  "default_ttl_hours": 96,
+  "notes_for_concierge": "TRIGGERS HUMAN CHECK-IN (HAP-RULE 4.3). Connecting rooms or family suite. Emma's nut allergy is CRITICAL — kitchen, pool, and all F&B staff must be briefed. Children amenities age-appropriate per child. Welcome moment should acknowledge the trip without being saccharine — 'first family trip in two years' is opt-in family signal, treat it with restraint and warmth. NO alcohol service to parents in pool/bar area when minors are present (HAP-FLOW 7)."
+}

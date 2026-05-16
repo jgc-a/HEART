@@ -1,0 +1,314 @@
+{
+  "property_id": "rosewood-sand-hill",
+  "name": "Rosewood Sand Hill",
+  "brand": "Rosewood Hotels & Resorts",
+  "location": {
+    "city": "Menlo Park",
+    "state": "CA",
+    "country": "US",
+    "lat": 37.4250,
+    "lon": -122.2078,
+    "region": "San Francisco Peninsula",
+    "timezone": "America/Los_Angeles",
+    "nearest_airports": [
+      { "iata": "SFO", "name": "San Francisco International", "drive_minutes": 25 },
+      { "iata": "SJC", "name": "San Jose Mineta", "drive_minutes": 22 },
+      { "iata": "OAK", "name": "Oakland International", "drive_minutes": 45 }
+    ]
+  },
+  "address": "2825 Sand Hill Road, Menlo Park, CA 94025",
+  "phone": "+1-650-561-1500",
+  "sense_of_place": {
+    "narrative": "Rosewood Sand Hill sits at the literal crossroads of the modern technological era. To the south, Sand Hill Road — a single mile of road that has financed the inventions of the last fifty years. To the north, Stanford University, whose intellectual gravity bends the valley. To the west, the wooded hills of Windy Hill, Russian Ridge, and the redwoods of the San Mateo coast. To the east, the southern reaches of San Francisco Bay. The property is not a hotel placed near these landmarks — it is the place where their cultures intersect. Founders write business plans on the patio at sunset. Stanford faculty hold sabbaticals in the gardens. Wine country drivers stop here before crossing the hills to Saratoga and Woodside. The sense of place is intellectual rigor expressed in California ease: cedar and stone, cypress and olive, a stillness that respects the noise its guests are escaping.",
+    "anchors": [
+      "Sand Hill Road as a single mile of venture capital history",
+      "Stanford intellectual heritage and the campus a mile away",
+      "The patio at sunset — the property's most legendary moment",
+      "Windy Hill and Russian Ridge hiking trails as the wild boundary",
+      "Olive groves and the slow rhythm of California agriculture",
+      "Wine country across the Santa Cruz Mountains (Saratoga, Woodside)",
+      "Madera — the property's restaurant, where Silicon Valley deals are closed"
+    ],
+    "local_partners": [
+      {
+        "name": "Stanford Sierra Olive Oil Grove",
+        "type": "agricultural_partner",
+        "purpose": "Welcome amenity — single-grove olive oil flight, three varietals.",
+        "narrative": "A 30-acre olive grove tended by Stanford's land trust, pressed locally. Olive oil arrives at the room in three small flasks with a tasting card.",
+        "demo_critical": true,
+        "lead_time_hours": 2
+      },
+      {
+        "name": "Madera Restaurant",
+        "type": "in_property_dining",
+        "purpose": "Fine dining, hearthside, Forbes-five-star.",
+        "narrative": "Open hearth, locally-sourced Northern California ingredients. Chef Jeremy Conklin's tasting menu is a regional autobiography.",
+        "demo_critical": true
+      },
+      {
+        "name": "Sequoia Spa",
+        "type": "in_property_wellness",
+        "purpose": "Forbes-five-star spa, 11 treatment rooms.",
+        "narrative": "Named for the trees that flank the property. The signature treatment uses oils pressed from the Stanford grove."
+      },
+      {
+        "name": "Filoli Gardens",
+        "type": "cultural_partner",
+        "purpose": "Recommended weekend experience, 16 minutes by car.",
+        "narrative": "A 1917 Georgian Revival country house with formal gardens. Best at golden hour. Available for private after-hours visits via the property's concierge.",
+        "lead_time_hours": 48,
+        "demo_critical": true
+      },
+      {
+        "name": "Thomas Fogarty Winery",
+        "type": "wine_partner",
+        "purpose": "Hill-top winery in Saratoga, 35 minutes by car.",
+        "narrative": "Vineyards perched at 2000 feet, views of the entire bay. Pinot Noir and Chardonnay focus. Private tastings can be arranged for property guests with sommelier accompaniment.",
+        "lead_time_hours": 24
+      },
+      {
+        "name": "Hidden Villa",
+        "type": "experiential_partner",
+        "purpose": "Working farm and wilderness preserve in Los Altos, 18 minutes by car.",
+        "narrative": "An 1,600-acre farm and trail network. Family-friendly. Private guided hike with on-site naturalist arranged via concierge."
+      },
+      {
+        "name": "Stanford University Campus",
+        "type": "cultural_partner",
+        "purpose": "Walking and bike tours, 8 minutes by car.",
+        "narrative": "Pre-arranged private tour with a Stanford student docent. The Cantor Arts Center, the Rodin Sculpture Garden, and the Memorial Church are highlights."
+      },
+      {
+        "name": "Allied Arts Guild",
+        "type": "cultural_partner",
+        "purpose": "Spanish Colonial gardens and artisan studios, 6 minutes by car.",
+        "narrative": "Working artisan studios in 1929 Spanish Colonial buildings. Lunch at the Blue Garden is the local secret."
+      }
+    ],
+    "experiences": [
+      {
+        "id": "founders_hour_madera",
+        "name": "Founder's Hour at Madera",
+        "duration_minutes": 120,
+        "max_party": 6,
+        "summary": "Chef's table tasting in Madera with sommelier pairings. Ideal for closing or celebrating an investment.",
+        "lead_time_hours": 24,
+        "price_per_person_usd_from": 285,
+        "tags": ["dining", "founder", "investor"]
+      },
+      {
+        "id": "sunrise_windy_hill",
+        "name": "Sunrise on Windy Hill",
+        "duration_minutes": 180,
+        "max_party": 6,
+        "summary": "Guided dawn hike to Windy Hill summit with a Rosewood guide, returning to property for restorative breakfast in the garden.",
+        "lead_time_hours": 12,
+        "price_per_person_usd_from": 95,
+        "tags": ["wellness", "outdoor", "breakfast"]
+      },
+      {
+        "id": "sand_hill_walk_and_talk",
+        "name": "Sand Hill Road Walk-and-Talk",
+        "duration_minutes": 90,
+        "max_party": 4,
+        "summary": "Historic VC firm tour by foot along Sand Hill Road, with a hospitality docent narrating the founding of Sequoia, Kleiner Perkins, Andreessen Horowitz.",
+        "lead_time_hours": 24,
+        "price_per_person_usd_from": 65,
+        "tags": ["founder", "history", "intellectual"]
+      },
+      {
+        "id": "filoli_golden_hour",
+        "name": "Filoli at Golden Hour",
+        "duration_minutes": 150,
+        "max_party": 8,
+        "summary": "Private after-hours garden visit at Filoli with charcuterie and Sonoma wine on the terrace. Best in May–October.",
+        "lead_time_hours": 48,
+        "price_per_person_usd_from": 220,
+        "tags": ["leisure", "couple", "discovery"]
+      },
+      {
+        "id": "fogarty_vineyard_tasting",
+        "name": "Fogarty Vineyard Tasting (Saratoga)",
+        "duration_minutes": 240,
+        "max_party": 6,
+        "summary": "Car service to Thomas Fogarty Winery in Saratoga, private tasting with the estate's winemaker, return via Skyline Boulevard.",
+        "lead_time_hours": 48,
+        "price_per_person_usd_from": 325,
+        "tags": ["wine", "leisure", "weekend"]
+      },
+      {
+        "id": "stanford_campus_walk",
+        "name": "Stanford Campus Walk",
+        "duration_minutes": 90,
+        "max_party": 6,
+        "summary": "Walking tour of central Stanford campus with a student docent. Cantor Arts Center and Rodin Sculpture Garden included.",
+        "lead_time_hours": 24,
+        "price_per_person_usd_from": 55,
+        "tags": ["intellectual", "family", "discovery"]
+      },
+      {
+        "id": "hidden_villa_family_hike",
+        "name": "Hidden Villa Family Hike",
+        "duration_minutes": 180,
+        "max_party": 6,
+        "summary": "Guided family hike at Hidden Villa farm in Los Altos. Kid-friendly trail with farm animal visit. Picnic lunch from Madera.",
+        "lead_time_hours": 24,
+        "price_per_person_usd_from": 75,
+        "tags": ["family", "outdoor", "kids"]
+      },
+      {
+        "id": "olive_oil_tasting_in_room",
+        "name": "Stanford Sierra Olive Oil Tasting (in-room welcome)",
+        "duration_minutes": 15,
+        "max_party": 4,
+        "summary": "Three single-varietal olive oils from the Stanford Sierra grove arranged on a cedar board with a tasting card. Complimentary welcome amenity.",
+        "lead_time_hours": 2,
+        "price_per_person_usd_from": 0,
+        "tags": ["welcome", "complimentary", "sense_of_place"]
+      },
+      {
+        "id": "patio_sur_private",
+        "name": "Patio Sur Private Reservation",
+        "duration_minutes": 120,
+        "max_party": 8,
+        "summary": "The southern patio reserved exclusively, suitable for external meetings or intimate dining. Heaters and a serif menu provided.",
+        "lead_time_hours": 24,
+        "price_per_person_usd_from": 0,
+        "tags": ["corporate", "private", "patio"]
+      },
+      {
+        "id": "midnight_at_madera",
+        "name": "Midnight at Madera (after-hours)",
+        "duration_minutes": 90,
+        "max_party": 4,
+        "summary": "After-hours hearthside dessert and digestif, hosted by the night manager. By invitation, suitable for long stays.",
+        "lead_time_hours": 24,
+        "price_per_person_usd_from": 145,
+        "tags": ["dining", "discovery", "late_night"]
+      }
+    ]
+  },
+  "amenities": [
+    "Outdoor pool (heated year-round)",
+    "Sequoia Spa (11 treatment rooms)",
+    "Fitness center (open 24h)",
+    "Yoga and meditation pavilion",
+    "Two private boardrooms",
+    "Patio Sur (south patio, reservable)",
+    "Patio Norte (north patio, gardens)",
+    "Wedding lawn",
+    "Pet-friendly (designated rooms)",
+    "Concierge desk (24h)",
+    "Valet parking",
+    "Car service (Tesla and Mercedes EQS fleet)",
+    "Helipad coordination (off-site, Palo Alto Airport)",
+    "Kids amenities and Kids Club (seasonal + on request)",
+    "Library lounge",
+    "Wine cellar (private dinners up to 12)"
+  ],
+  "rooms": {
+    "total": 121,
+    "types": [
+      {
+        "id": "standard_king",
+        "name": "Standard King",
+        "size_sqft": 525,
+        "occupancy_max": 2,
+        "rate_usd_per_night_from": 925
+      },
+      {
+        "id": "garden_suite",
+        "name": "Garden Suite",
+        "size_sqft": 825,
+        "occupancy_max": 3,
+        "rate_usd_per_night_from": 1450,
+        "features": ["Private garden patio", "Standalone tub"]
+      },
+      {
+        "id": "sand_hill_suite",
+        "name": "Sand Hill Suite",
+        "size_sqft": 1100,
+        "occupancy_max": 4,
+        "rate_usd_per_night_from": 2150,
+        "features": ["Separate living room", "Workstation alcove", "Fireplace"]
+      },
+      {
+        "id": "penthouse",
+        "name": "The Penthouse",
+        "size_sqft": 2400,
+        "occupancy_max": 6,
+        "rate_usd_per_night_from": 6500,
+        "features": ["Wraparound terrace", "Wood-burning fireplace", "Private wine cellar", "Two bedrooms"]
+      },
+      {
+        "id": "family_suite",
+        "name": "Family Suite (Connecting)",
+        "size_sqft": 1400,
+        "occupancy_max": 5,
+        "rate_usd_per_night_from": 1850,
+        "features": ["Two connecting bedrooms", "Child-safe configuration", "Kids welcome kit included"]
+      }
+    ]
+  },
+  "dining": {
+    "restaurants": [
+      {
+        "id": "madera",
+        "name": "Madera",
+        "type": "fine_dining",
+        "stars": ["Michelin (recommended)", "Forbes Five-Star"],
+        "chef": "Jeremy Conklin",
+        "hours_breakfast": "07:00-10:30",
+        "hours_lunch": "11:30-14:00",
+        "hours_dinner": "17:30-22:00",
+        "private_dining": true,
+        "private_dining_capacity": 12,
+        "dress_code": "smart casual",
+        "sommelier_program": true,
+        "no_shellfish_substitutions_available": true,
+        "vegetarian_tasting_menu_available": true,
+        "kids_menu_available": true
+      },
+      {
+        "id": "madera_bar",
+        "name": "Madera Bar",
+        "type": "lounge",
+        "hours": "15:00-00:00",
+        "signature": "California craft cocktails, hill-view terrace seating"
+      },
+      {
+        "id": "in_room_dining",
+        "name": "In-Room Dining",
+        "type": "in_room",
+        "hours": "24/7",
+        "lead_time_minutes": 35,
+        "kids_menu_available": true
+      }
+    ]
+  },
+  "spa": {
+    "name": "Sequoia Spa",
+    "rooms": 11,
+    "hours": "09:00-21:00",
+    "signature_treatments": [
+      "Stanford Grove Olive Oil Massage (90 min)",
+      "Redwood Forest Bathing (60 min)",
+      "Founder's Recovery (120 min)",
+      "Bleisure Reset (75 min)"
+    ]
+  },
+  "operational_metadata": {
+    "lqa_certified": true,
+    "forbes_five_star": true,
+    "aaa_five_diamond": true,
+    "check_in_time": "15:00",
+    "check_out_time": "12:00",
+    "early_check_in_policy": "Subject to availability, complimentary for Rosewood Elite Platinum.",
+    "late_check_out_policy": "Until 16:00 with 24h notice. Until 18:00 chargeable.",
+    "cancellation_policy_default": "48 hours prior to arrival, no charge.",
+    "pet_policy": "Welcome in designated rooms. USD 150 cleaning fee.",
+    "minor_check_in_policy": "HAP-RULE 4.3 — Human check-in required for any reservation with declared minors. Documentary verification of each minor.",
+    "languages_at_front_desk": ["en", "es", "zh", "fr"],
+    "covid_protocol_active": false
+  }
+}
