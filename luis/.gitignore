@@ -22,6 +22,11 @@ build/
 # Data (runtime only)
 server/audit.jsonl
 server/*.log
+server/data/live_profiles/
+server/data/telegram_users.json
+server/data/telegram_events.jsonl
+server/data/active_sessions.json
+server/data/guests/telegram_*.json
 
 # IDE
 .vscode/
