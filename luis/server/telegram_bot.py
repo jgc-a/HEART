@@ -343,13 +343,22 @@ async def cmd_start(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
 
         summary = _format_recognized_summary(profile)
 
+        from_email = ""
+        if booking_ref:
+            from_email = (
+                f"_(opened from your Rosewood booking confirmation · {booking_ref})_\n\n"
+            )
+
         await update.message.reply_text(
-            f"🏨 Welcome back, *{preloaded.get('display_name', user.first_name)}*.\n\n"
-            f"_Your agent recognized you._ Pulled from {origin}.\n\n"
-            f"I'm about to handshake with *Rosewood Sand Hill* for *{purpose}*. "
-            "Here's exactly what I'll share — every line, in scope-bounded, time-bounded form:\n\n"
+            f"🏨 *{preloaded.get('display_name', user.first_name)}*, it's me — your agent.\n\n"
+            f"{from_email}"
+            f"I recognized you from {origin}. "
+            "I'm ready to handshake with *Rosewood Sand Hill* on your behalf — "
+            "scope-bounded, time-bounded, signed.\n\n"
+            f"For *{purpose}* I'll share:\n\n"
             f"{summary}\n\n"
-            "Approve to send, or tap *Adjust* if anything has changed.",
+            "_You won't have to type anything else. I'll show you what we negotiated "
+            "with HEART and you'll confirm in one tap._",
             parse_mode=ParseMode.MARKDOWN,
             reply_markup=recognized_keyboard(),
         )
@@ -373,13 +382,18 @@ async def cmd_start(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
         return
 
     # Fallback: conversational mode (current behavior)
+    from_email = ""
+    if booking_ref:
+        from_email = (
+            f"_(you came from your Rosewood booking confirmation · {booking_ref})_\n\n"
+        )
     await update.message.reply_text(
-        f"🏨 Welcome, {user.first_name}.\n\n"
-        "I'm your personal agent for this trip. Think of me as your Claude — "
-        "I learn what matters to you, then speak to *Rosewood Sand Hill* on your behalf, "
-        "only with your authorization.\n\n"
-        "I don't have a profile on file for you yet. *Tell me about your trip* and I'll "
-        "remember for next time. Or use /persona to load a demo persona.",
+        f"🏨 Hi {user.first_name}, I'm your agent on Telegram.\n\n"
+        f"{from_email}"
+        "Think of me as your Claude in the messaging app — same identity, same memory, "
+        "speaking *Rosewood Sand Hill*'s protocol on your behalf.\n\n"
+        "I don't have a profile on file for you yet. Tell me one or two things about your "
+        "trip and I'll learn the rest. Or use /persona to load a demo persona instantly.",
         parse_mode=ParseMode.MARKDOWN,
         reply_markup=welcome_keyboard(),
     )
