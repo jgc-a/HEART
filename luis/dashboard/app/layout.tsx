@@ -27,6 +27,7 @@ const nav = [
   { href: "/", label: "Today's Arrivals" },
   { href: "/hap-console", label: "HAP Console" },
   { href: "/reputation", label: "Reputation Audit" },
+  { href: "/install", label: "Install Plugin" },
 ];
 
 export default function RootLayout({
