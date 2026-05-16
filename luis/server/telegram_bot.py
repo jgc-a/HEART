@@ -155,6 +155,49 @@ _pending_outcomes: dict[int, dict[str, Any]] = {}
 _pending_invoices: dict[int, dict[str, Any]] = {}
 
 
+# ---------- HEART runtime bridge (Guillermo's port 5560) ----------
+
+# Map a Luis persona_id to the matching guest_guid in heart/data/guests.json
+# so /checkout posts to the same record Guillermo's runtime knows.
+_HEART_GUID_BY_PERSONA: dict[str, str] = {
+    "luis":            "hap-guid-0006-luis-vargas",
+    "guillermo":       "hap-guid-0007-guillermo-aldana",
+    "marcus":          "hap-guid-0001-marcus-chen",
+    "family_johnson":  "hap-guid-0003-martinez-family",
+}
+
+_HEART_BASE = os.environ.get("HAP_HEART_BASE", "http://localhost:5560")
+
+
+def _notify_heart_checkout(persona_id: str | None) -> dict[str, Any] | None:
+    """POST to Guillermo's HEART runtime so the checkout shows up in his
+    Departing Threads + Checkout modules. Fire-and-forget — if HEART isn't
+    running on this machine, just log and continue.
+
+    Returns the heart response dict (or None if heart is unreachable).
+    """
+    import httpx  # local import — already in deps
+
+    if not persona_id:
+        print("[heart-bridge] checkout skipped: no persona_id", flush=True)
+        return None
+    guid = _HEART_GUID_BY_PERSONA.get(persona_id.lower())
+    if not guid:
+        print(f"[heart-bridge] checkout skipped: no GUID mapping for persona '{persona_id}'", flush=True)
+        return None
+    url = f"{_HEART_BASE}/api/heart/v1/checkout/{guid}/bye"
+    try:
+        r = httpx.post(url, timeout=3.0)
+        if r.status_code == 200:
+            data = r.json()
+            print(f"[heart-bridge] /bye OK · {guid} · {data.get('guest_name')}", flush=True)
+            return data
+        print(f"[heart-bridge] /bye HTTP {r.status_code} · {r.text[:200]}", flush=True)
+    except Exception as exc:  # noqa: BLE001
+        print(f"[heart-bridge] /bye unreachable ({_HEART_BASE}): {exc}", flush=True)
+    return None
+
+
 # ---------- billing / invoice helpers ----------
 
 
@@ -835,6 +878,22 @@ async def _process_invoice_and_checkout(query, ctx: ContextTypes.DEFAULT_TYPE, c
         "— Rosewood Sand Hill"
     )
     await _safe_send_message(ctx, chat_id, farewell, try_markdown=False)
+
+    # === Mirror the checkout into Guillermo's HEART runtime ===
+    # POST /api/heart/v1/checkout/<guid>/bye so it shows up in his
+    # Departing Threads / Checkout view + emits the same HAP.CHECKOUT.*
+    # chain his dashboard already knows how to render.
+    persona_id = profile.get("persona_id")
+    heart_response = _notify_heart_checkout(persona_id)
+    if heart_response:
+        emit_event(
+            {
+                "ts": _now_iso(),
+                "kind": "heart_bridge_ok",
+                "chat_id": chat_id,
+                "label": f"HEART runtime notified · {heart_response.get('guest_name')} · room {heart_response.get('room')} released",
+            }
+        )
 
     _pending_invoices.pop(chat_id, None)
 
