@@ -1,0 +1,25 @@
+{
+  "id": "guillermo",
+  "display_name": "Guillermo Aldana",
+  "matches": ["guillermo", "guillermoaldana", "jgc-a", "aldana"],
+  "source": "preloaded",
+  "agent_memory_origin": "Claude memory · 2 past stays · corporate calendar",
+  "visit_purpose": "two-day strategy offsite",
+  "lodging": [
+    "executive desk setup with filtered still water",
+    "early espresso ready at 06:30",
+    "pressing service standard, late check-out held",
+    "soundproof workspace"
+  ],
+  "dietary": [
+    "espresso double, ristretto if available",
+    "light breakfast, no dairy"
+  ],
+  "cultural": [
+    "sector-relevant press at door — Wired, The Information",
+    "Spanish for warmth, English for the brief"
+  ],
+  "wellness": [],
+  "notes": "Corporate flow. Past stays: minimal lobby presence, car service pre-coordinated for off-property meetings.",
+  "ready": true
+}

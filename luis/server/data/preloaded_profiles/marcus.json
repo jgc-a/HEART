@@ -1,0 +1,27 @@
+{
+  "id": "marcus",
+  "display_name": "Marcus Chen",
+  "matches": ["marcus", "marcuschen", "marcus_chen"],
+  "source": "preloaded",
+  "agent_memory_origin": "Claude memory · 5 past stays · founder workspace context",
+  "visit_purpose": "founder offsite — Series B in active negotiation",
+  "lodging": [
+    "suite with adjoining workspace",
+    "phone calls routed to silent — late-night focus block",
+    "Bose noise-cancelling on request",
+    "standing desk option"
+  ],
+  "dietary": [
+    "vegetarian-leaning, tasting menu pacing slow",
+    "single-origin coffee at 06:00 sharp",
+    "Saratoga sparkling water"
+  ],
+  "cultural": [
+    "anglophone register, terse, technical",
+    "Filoli book on desk as Sense of Place gesture",
+    "no fragrance in the room"
+  ],
+  "wellness": [],
+  "notes": "Discretion paramount. Past stays: no staff name-drop in any channel, suite turndown only after explicit cue.",
+  "ready": true
+}

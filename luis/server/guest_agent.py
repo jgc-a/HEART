@@ -23,6 +23,7 @@ from anthropic import Anthropic
 MODEL = os.environ.get("HAP_CLAUDE_MODEL", "claude-sonnet-4-5-20250929")
 DATA_DIR = Path(__file__).parent / "data"
 PROFILES_DIR = DATA_DIR / "live_profiles"
+PRELOADED_DIR = DATA_DIR / "preloaded_profiles"
 
 
 SYSTEM_PROMPT = """You are the traveler's personal AI agent — think of yourself as their Claude, talking to them through a Telegram bot.
@@ -115,6 +116,79 @@ def reset_profile(chat_id: int) -> None:
     p = _profile_path(chat_id)
     if p.exists():
         p.unlink()
+
+
+def list_preloaded() -> list[dict[str, Any]]:
+    """List every preloaded persona that lives on disk."""
+    if not PRELOADED_DIR.exists():
+        return []
+    out = []
+    for f in sorted(PRELOADED_DIR.glob("*.json")):
+        try:
+            out.append(json.loads(f.read_text(encoding="utf-8")))
+        except json.JSONDecodeError:
+            continue
+    return out
+
+
+def load_preloaded_by_id(persona_id: str) -> dict[str, Any] | None:
+    """Load a specific preloaded persona by file name (without .json)."""
+    p = PRELOADED_DIR / f"{persona_id.lower()}.json"
+    if not p.exists():
+        return None
+    try:
+        return json.loads(p.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return None
+
+
+def match_preloaded(username: str | None, first_name: str | None) -> dict[str, Any] | None:
+    """Find a preloaded persona whose 'matches' list contains the username or first name.
+
+    Case-insensitive substring match in either direction.
+    Returns None if no match.
+    """
+    candidates: list[str] = []
+    for v in (username, first_name):
+        if v:
+            candidates.append(v.lower())
+    if not candidates:
+        return None
+
+    for persona in list_preloaded():
+        matches = persona.get("matches") or []
+        for m in matches:
+            ml = m.lower()
+            if not ml:
+                continue
+            for c in candidates:
+                if ml in c or c in ml:
+                    return persona
+    return None
+
+
+def bootstrap_from_preloaded(
+    chat_id: int, preloaded: dict[str, Any]
+) -> dict[str, Any]:
+    """Materialize a preloaded persona as the chat's live profile.
+
+    Returns the freshly written live profile.
+    """
+    profile = _empty_profile()
+    profile["visit_purpose"] = preloaded.get("visit_purpose")
+    profile["lodging"] = list(preloaded.get("lodging") or [])
+    profile["dietary"] = list(preloaded.get("dietary") or [])
+    profile["cultural"] = list(preloaded.get("cultural") or [])
+    profile["wellness"] = list(preloaded.get("wellness") or [])
+    profile["notes"] = preloaded.get("notes")
+    profile["ready"] = True
+    profile["source"] = preloaded.get("source", "preloaded")
+    profile["agent_memory_origin"] = preloaded.get("agent_memory_origin")
+    profile["persona_id"] = preloaded.get("id")
+    profile["display_name"] = preloaded.get("display_name")
+    profile["human_check_in_required"] = bool(preloaded.get("human_check_in_required"))
+    save_profile(chat_id, profile)
+    return profile
 
 
 def _merge_extracted(profile: dict[str, Any], extracted: dict[str, Any]) -> dict[str, Any]:

@@ -1,0 +1,22 @@
+{
+  "id": "default",
+  "display_name": "Returning Guest",
+  "matches": [],
+  "source": "preloaded",
+  "agent_memory_origin": "Claude memory · returning guest baseline",
+  "visit_purpose": "leisure stay",
+  "lodging": [
+    "medium-firm mattress",
+    "quiet room, no street-facing"
+  ],
+  "dietary": [
+    "no strong dietary restrictions on file"
+  ],
+  "cultural": [
+    "English default, multilingual welcome",
+    "Sense of Place welcome amenity"
+  ],
+  "wellness": [],
+  "notes": "Returning guest with light preference history. Agent will share visit purpose and minimal preferences; HEART will fill the rest from Sense of Place defaults.",
+  "ready": true
+}

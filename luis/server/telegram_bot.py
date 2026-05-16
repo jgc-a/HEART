@@ -138,6 +138,72 @@ def handshake_ready_keyboard() -> InlineKeyboardMarkup:
     )
 
 
+def recognized_keyboard() -> InlineKeyboardMarkup:
+    """Shown when the agent recognized the user and already has a profile loaded."""
+    return InlineKeyboardMarkup(
+        [
+            [
+                InlineKeyboardButton(
+                    "🤝 Approve & handshake with Rosewood",
+                    callback_data="hap:initiate_handshake",
+                )
+            ],
+            [
+                InlineKeyboardButton(
+                    "✏️ Adjust before sending",
+                    callback_data="hap:continue_chat",
+                ),
+                InlineKeyboardButton(
+                    "🔄 Switch persona",
+                    callback_data="hap:list_personas",
+                ),
+            ],
+        ]
+    )
+
+
+def persona_picker_keyboard(personas: list[dict]) -> InlineKeyboardMarkup:
+    rows: list[list[InlineKeyboardButton]] = []
+    for p in personas:
+        rows.append(
+            [
+                InlineKeyboardButton(
+                    f"{p.get('display_name')} · {p.get('visit_purpose', '')[:32]}",
+                    callback_data=f"hap:persona:{p['id']}",
+                )
+            ]
+        )
+    rows.append(
+        [InlineKeyboardButton("✏️ Start a fresh conversation", callback_data="hap:fresh")]
+    )
+    return InlineKeyboardMarkup(rows)
+
+
+def _format_recognized_summary(profile: dict) -> str:
+    """Render the 'your agent already knows you' summary."""
+    lines: list[str] = []
+    if profile.get("visit_purpose"):
+        lines.append(f"📍 *Visit purpose:* {profile['visit_purpose']}")
+
+    def section(emoji: str, label: str, items: list[str] | None) -> None:
+        if not items:
+            return
+        lines.append("")
+        lines.append(f"{emoji} *{label}*")
+        for item in items:
+            lines.append(f"• {item}")
+
+    section("🛏", "Lodging", profile.get("lodging"))
+    section("🍽", "Dietary", profile.get("dietary"))
+    section("🌿", "Cultural / beverages", profile.get("cultural"))
+    if profile.get("wellness"):
+        lines.append("")
+        lines.append("☐ *Wellness (opt-in)*")
+        for item in profile["wellness"]:
+            lines.append(f"• {item}")
+    return "\n".join(lines)
+
+
 def _format_live_profile(profile: dict) -> str:
     """Render the live profile as a markdown consent block."""
     bullets: list[str] = []
@@ -217,13 +283,54 @@ async def cmd_start(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
     )
     # reset any prior conversation so the demo starts clean
     guest_agent.reset_profile(chat.id)
+
+    # Try to recognize the user against the preloaded personas
+    preloaded = guest_agent.match_preloaded(user.username, user.first_name)
+
+    if preloaded:
+        profile = guest_agent.bootstrap_from_preloaded(chat.id, preloaded)
+        origin = preloaded.get("agent_memory_origin", "Claude memory")
+        purpose = profile.get("visit_purpose") or "your stay"
+
+        summary = _format_recognized_summary(profile)
+
+        await update.message.reply_text(
+            f"🏨 Welcome back, *{preloaded.get('display_name', user.first_name)}*.\n\n"
+            f"_Your agent recognized you._ Pulled from {origin}.\n\n"
+            f"I'm about to handshake with *Rosewood Sand Hill* for *{purpose}*. "
+            "Here's exactly what I'll share — every line, in scope-bounded, time-bounded form:\n\n"
+            f"{summary}\n\n"
+            "Approve to send, or tap *Adjust* if anything has changed.",
+            parse_mode=ParseMode.MARKDOWN,
+            reply_markup=recognized_keyboard(),
+        )
+        audit.append(
+            event="GUEST_AGENT.PERSONA_RECOGNIZED",
+            guest_id=preloaded["id"],
+            extra={
+                "chat_id": chat.id,
+                "persona_id": preloaded["id"],
+                "via": user.username or user.first_name,
+            },
+        )
+        emit_event(
+            {
+                "ts": _now_iso(),
+                "kind": "persona_recognized",
+                "chat_id": chat.id,
+                "label": f"Recognized persona · {preloaded.get('display_name')} ({preloaded.get('visit_purpose')})",
+            }
+        )
+        return
+
+    # Fallback: conversational mode (current behavior)
     await update.message.reply_text(
         f"🏨 Welcome, {user.first_name}.\n\n"
         "I'm your personal agent for this trip. Think of me as your Claude — "
         "I learn what matters to you, then speak to *Rosewood Sand Hill* on your behalf, "
         "only with your authorization.\n\n"
-        "*Tell me about your trip.* What's the purpose? Anything you'd want them to know? "
-        "(Just talk to me normally.)",
+        "I don't have a profile on file for you yet. *Tell me about your trip* and I'll "
+        "remember for next time. Or use /persona to load a demo persona.",
         parse_mode=ParseMode.MARKDOWN,
         reply_markup=welcome_keyboard(),
     )
@@ -233,6 +340,59 @@ async def cmd_start(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
             "kind": "interview_started",
             "chat_id": chat.id,
             "label": f"Interview started with {user.first_name or 'guest'}",
+        }
+    )
+
+
+async def cmd_persona(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
+    """Force-load a specific demo persona. Usage: /persona luis | marcus | guillermo | family_johnson"""
+    chat = update.effective_chat
+    if chat is None or update.message is None:
+        return
+
+    args = ctx.args or []
+    if not args:
+        personas = guest_agent.list_preloaded()
+        await update.message.reply_text(
+            "🎭 *Pick a persona to load:*\n\n"
+            "Each persona is a different traveler your agent 'already knows'.",
+            parse_mode=ParseMode.MARKDOWN,
+            reply_markup=persona_picker_keyboard(personas),
+        )
+        return
+
+    persona_id = args[0].lower()
+    preloaded = guest_agent.load_preloaded_by_id(persona_id)
+    if not preloaded:
+        await update.message.reply_text(
+            f"No persona named `{persona_id}`. Try /persona without arguments to pick one.",
+            parse_mode=ParseMode.MARKDOWN,
+        )
+        return
+
+    profile = guest_agent.bootstrap_from_preloaded(chat.id, preloaded)
+    summary = _format_recognized_summary(profile)
+    purpose = profile.get("visit_purpose") or "your stay"
+
+    await update.message.reply_text(
+        f"🎭 Persona loaded: *{preloaded.get('display_name')}*\n\n"
+        f"_Pulled from {preloaded.get('agent_memory_origin', 'Claude memory')}._\n\n"
+        f"About to handshake with Rosewood for *{purpose}*:\n\n"
+        f"{summary}",
+        parse_mode=ParseMode.MARKDOWN,
+        reply_markup=recognized_keyboard(),
+    )
+    audit.append(
+        event="GUEST_AGENT.PERSONA_LOADED",
+        guest_id=preloaded["id"],
+        extra={"chat_id": chat.id, "persona_id": preloaded["id"], "via": "command"},
+    )
+    emit_event(
+        {
+            "ts": _now_iso(),
+            "kind": "persona_loaded",
+            "chat_id": chat.id,
+            "label": f"Persona loaded · {preloaded.get('display_name')}",
         }
     )
 
@@ -342,7 +502,56 @@ async def cb_consent(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
     if data == "hap:continue_chat":
         await ctx.bot.send_message(
             chat_id=chat_id,
-            text="Of course. What else should I know?",
+            text="Of course. What's changed? Just tell me normally and I'll update the scope.",
+        )
+        return
+
+    if data == "hap:list_personas":
+        personas = guest_agent.list_preloaded()
+        await ctx.bot.send_message(
+            chat_id=chat_id,
+            text="🎭 *Switch persona:*",
+            parse_mode=ParseMode.MARKDOWN,
+            reply_markup=persona_picker_keyboard(personas),
+        )
+        return
+
+    if data == "hap:fresh":
+        guest_agent.reset_profile(chat_id)
+        await ctx.bot.send_message(
+            chat_id=chat_id,
+            text="Fresh start. *Tell me about your trip.* I'll learn as we talk.",
+            parse_mode=ParseMode.MARKDOWN,
+        )
+        return
+
+    if data.startswith("hap:persona:"):
+        persona_id = data.split(":", 2)[2]
+        preloaded = guest_agent.load_preloaded_by_id(persona_id)
+        if not preloaded:
+            await ctx.bot.send_message(chat_id=chat_id, text="That persona is gone.")
+            return
+        profile = guest_agent.bootstrap_from_preloaded(chat_id, preloaded)
+        summary = _format_recognized_summary(profile)
+        purpose = profile.get("visit_purpose") or "your stay"
+        await ctx.bot.send_message(
+            chat_id=chat_id,
+            text=(
+                f"🎭 *{preloaded.get('display_name')}* loaded.\n\n"
+                f"_Pulled from {preloaded.get('agent_memory_origin', 'Claude memory')}._\n\n"
+                f"Ready to handshake for *{purpose}*:\n\n"
+                f"{summary}"
+            ),
+            parse_mode=ParseMode.MARKDOWN,
+            reply_markup=recognized_keyboard(),
+        )
+        emit_event(
+            {
+                "ts": _now_iso(),
+                "kind": "persona_loaded",
+                "chat_id": chat_id,
+                "label": f"Persona loaded · {preloaded.get('display_name')}",
+            }
         )
         return
 
@@ -765,6 +974,7 @@ def main() -> None:
     app.add_handler(CommandHandler("start", cmd_start))
     app.add_handler(CommandHandler("handshake", cmd_handshake))
     app.add_handler(CommandHandler("demo", cmd_demo))
+    app.add_handler(CommandHandler("persona", cmd_persona))
     app.add_handler(CallbackQueryHandler(cb_consent, pattern=r"^hap:"))
     # Plain text → conversational guest agent (must be last so it's the fallback)
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, cb_message))

@@ -1,0 +1,26 @@
+{
+  "id": "family_johnson",
+  "display_name": "Mark & Sarah Johnson + 2",
+  "matches": ["johnson", "familyjohnson", "sarahjohnson", "markjohnson"],
+  "source": "preloaded",
+  "agent_memory_origin": "Claude memory · 1 past stay · family calendar shared",
+  "visit_purpose": "first international family trip in two years",
+  "lodging": [
+    "connecting rooms, garden-facing",
+    "no cribs — bed rails for younger child",
+    "pool floats and kids amenities (with parental consent)"
+  ],
+  "dietary": [
+    "children's menu activated",
+    "Pacific Northwest seasonal for adults",
+    "NO NUTS for younger child — critical allergy"
+  ],
+  "cultural": [
+    "English only · soft, warm register",
+    "local family experience pre-warmed (Hidden Villa, Filoli)"
+  ],
+  "wellness": [],
+  "notes": "HAP-RULE 4.3 active — check-in by human, documentary verification of both minors. No alcohol service to adults in pool zones with minors present.",
+  "ready": true,
+  "human_check_in_required": true
+}

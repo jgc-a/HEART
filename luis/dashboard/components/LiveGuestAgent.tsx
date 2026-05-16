@@ -14,6 +14,10 @@ type LiveProfile = {
   ready: boolean;
   updated_at: string | null;
   history?: { role: string; content: string }[];
+  source?: string;
+  agent_memory_origin?: string;
+  persona_id?: string;
+  display_name?: string;
 };
 
 type Resp = { profiles: LiveProfile[] };
@@ -84,13 +88,19 @@ export function LiveGuestAgent() {
       <div className="divide-y divide-bronze/10">
         {profiles.map((p) => (
           <div key={p.chat_id} className="px-7 py-6">
-            <div className="flex items-baseline justify-between mb-4">
+            <div className="flex items-baseline justify-between mb-2">
               <div className="flex items-baseline gap-3">
-                <span className="font-mono text-[0.7rem] text-bronze">
-                  chat {p.chat_id}
-                </span>
-                {p.visit_purpose && (
+                {p.display_name ? (
                   <span className="font-serif text-2xl text-ink leading-none">
+                    {p.display_name}
+                  </span>
+                ) : (
+                  <span className="font-mono text-[0.7rem] text-bronze">
+                    chat {p.chat_id}
+                  </span>
+                )}
+                {p.visit_purpose && (
+                  <span className="text-ink/60 italic text-sm">
                     {p.visit_purpose}
                   </span>
                 )}
@@ -106,6 +116,26 @@ export function LiveGuestAgent() {
                 >
                   Learning…
                 </Badge>
+              )}
+            </div>
+
+            {/* source pill: preloaded vs conversation */}
+            <div className="mb-4 flex items-center gap-2 text-[0.7rem]">
+              {p.source === "preloaded" ? (
+                <>
+                  <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-forest/10 border border-forest/30 text-forest uppercase tracking-[0.16em]">
+                    <span className="w-1 h-1 rounded-full bg-forest" /> preloaded
+                  </span>
+                  {p.agent_memory_origin && (
+                    <span className="text-ink/55 italic">
+                      {p.agent_memory_origin}
+                    </span>
+                  )}
+                </>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-bronze/10 border border-bronze/30 text-bronze uppercase tracking-[0.16em]">
+                  <span className="w-1 h-1 rounded-full bg-bronze" /> learned in conversation
+                </span>
               )}
             </div>
 

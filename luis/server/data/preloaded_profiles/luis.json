@@ -1,0 +1,30 @@
+{
+  "id": "luis",
+  "display_name": "Luis Vargas",
+  "matches": ["luis", "luisvargasfdz", "luisvargas", "vargasfdz"],
+  "source": "preloaded",
+  "agent_memory_origin": "Claude memory · 3 past stays · calendar sync",
+  "visit_purpose": "business travel · Sand Hill VC corridor",
+  "lodging": [
+    "firm mattress · 2 firm + 1 medium pillow",
+    "high floor, garden or hill view",
+    "lighting scene 'Evening Calm', dim bias",
+    "room at 20°C / 68°F",
+    "blackout curtains for jet-lag recovery"
+  ],
+  "dietary": [
+    "no shellfish — flag the Sequoia menu",
+    "lighter dinners preferred",
+    "Mountain Valley still water"
+  ],
+  "cultural": [
+    "matcha (Uji, ceremonial grade) whisked at 75°C on welcome tray",
+    "low jazz queued for arrival window",
+    "bilingual ES/EN — warm Spanish for arrival, formal English for business"
+  ],
+  "wellness": [
+    "occasional lower back tension (opt-in disclosure)"
+  ],
+  "notes": "Bleisure traveler. Past stays show preference for Stanford Sierra olive oil amenity and Filoli pivot on the weekend.",
+  "ready": true
+}
