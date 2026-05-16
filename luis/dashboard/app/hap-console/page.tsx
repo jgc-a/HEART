@@ -6,6 +6,7 @@ import { StaffBrief } from "@/components/StaffBrief";
 import { AuditLogStream } from "@/components/AuditLogStream";
 import { TelegramPanel } from "@/components/TelegramPanel";
 import { LiveGuestAgent } from "@/components/LiveGuestAgent";
+import { A2AConversation } from "@/components/A2AConversation";
 import { Button } from "@/components/ui/button";
 
 export default function HapConsolePage() {
@@ -37,8 +38,13 @@ export default function HapConsolePage() {
       </div>
 
       {/* live guest agent — what Claude is learning from the conversation */}
-      <div className="mb-7">
+      <div className="mb-5">
         <LiveGuestAgent />
+      </div>
+
+      {/* live A2A — the two Claudes talking via the HAP tools */}
+      <div className="mb-7">
+        <A2AConversation />
       </div>
 
       {/* main comm chain */}

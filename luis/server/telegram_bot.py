@@ -42,6 +42,7 @@ from telegram.ext import (  # noqa: E402
 )
 
 from server import audit, guest_agent  # noqa: E402
+from server.tools import arrival as arrival_tool, handshake as handshake_tool  # noqa: E402
 
 TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
 USERS_FILE = _HERE / "data" / "telegram_users.json"
@@ -382,18 +383,119 @@ async def cb_consent(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
 
     if data == "hap:approve:all":
         profile = guest_agent.get_profile(chat_id)
-        scope_size = (
-            (1 if profile.get("visit_purpose") else 0)
-            + len(profile.get("lodging") or [])
-            + len(profile.get("dietary") or [])
-            + len(profile.get("cultural") or [])
-        )
+        chat = query.message.chat
+        first_name = chat.first_name if hasattr(chat, "first_name") else None
+
+        # 1. Materialize the live profile as a HAP-SCHEMA guest file
+        guest_id = _save_hap_guest_from_telegram(chat_id, first_name, profile)
+        scopes = _profile_to_scope(profile)
+
+        # 2. Edit the original message to acknowledge approval
         await query.edit_message_text(
             f"✅ *Approved*\n\n"
-            f"Scope granted: {scope_size} items\n"
-            "TTL: 72h · session `hap-session-018f…`\n\n"
-            "Your concierge is preparing the stay…",
+            f"Scope granted: {len(scopes)} category{'ies' if len(scopes) != 1 else ''}\n"
+            "TTL: 72h\n\n"
+            "_Your agent is now talking to HEART. One moment._",
             parse_mode=ParseMode.MARKDOWN,
+        )
+
+        # 3. A2A — Guest Agent → HAP Server (handshake)
+        emit_event(
+            {
+                "ts": _now_iso(),
+                "kind": "a2a_request",
+                "chat_id": chat_id,
+                "label": f"Guest Agent → HAP Server · hap_handshake({len(scopes)} scopes)",
+                "from": "guest_agent",
+                "to": "concierge",
+                "tool": "hap_handshake",
+            }
+        )
+        try:
+            handshake_result = handshake_tool.run(
+                handshake_tool.HandshakeInput(
+                    guest_id=guest_id,
+                    scope_requested=scopes,
+                    ttl_hours=72,
+                )
+            )
+        except Exception as exc:  # noqa: BLE001
+            await ctx.bot.send_message(
+                chat_id=chat_id,
+                text=f"⚠️ Handshake failed: {exc}",
+            )
+            return
+
+        emit_event(
+            {
+                "ts": _now_iso(),
+                "kind": "a2a_response",
+                "chat_id": chat_id,
+                "label": f"HAP Server → Guest Agent · session {handshake_result.session_id[:18]}…",
+                "from": "concierge",
+                "to": "guest_agent",
+                "tool": "hap_handshake",
+            }
+        )
+
+        # 4. A2A — Guest Agent → HAP Server (propose_arrival) — calls REAL Claude
+        emit_event(
+            {
+                "ts": _now_iso(),
+                "kind": "a2a_request",
+                "chat_id": chat_id,
+                "label": "Guest Agent → HAP Server · hap_propose_arrival()",
+                "from": "guest_agent",
+                "to": "concierge",
+                "tool": "hap_propose_arrival",
+            }
+        )
+        try:
+            arrival_result = arrival_tool.run(
+                arrival_tool.ArrivalInput(
+                    guest_id=guest_id,
+                    arrival_date="2026-05-18",
+                    session_id=handshake_result.session_id,
+                )
+            )
+        except Exception as exc:  # noqa: BLE001
+            await ctx.bot.send_message(
+                chat_id=chat_id,
+                text=f"⚠️ Arrival orchestration failed: {exc}",
+            )
+            return
+
+        emit_event(
+            {
+                "ts": _now_iso(),
+                "kind": "a2a_response",
+                "chat_id": chat_id,
+                "label": f"HEART → Guest Agent · flow={arrival_result.flow_profile} · brief ready",
+                "from": "concierge",
+                "to": "guest_agent",
+                "tool": "hap_propose_arrival",
+            }
+        )
+
+        audit.append(
+            event="HAP.HANDSHAKE.APPROVED",
+            guest_id=guest_id,
+            session_id=handshake_result.session_id,
+            scope=scopes,
+            extra={
+                "channel": "telegram",
+                "chat_id": chat_id,
+                "ttl_hours": 72,
+                "stay_id": arrival_result.stay_id,
+            },
+        )
+        emit_event(
+            {
+                "ts": _now_iso(),
+                "kind": "approved",
+                "chat_id": chat_id,
+                "label": f"Approved · {len(scopes)} scopes · TTL 72h · stay={arrival_result.stay_id}",
+            }
         )
         audit.append(
             event="HAP.HANDSHAKE.APPROVED",
@@ -414,20 +516,29 @@ async def cb_consent(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
                 "label": "Approved (5 scopes, TTL 72h)",
             }
         )
-        await asyncio.sleep(2.2)
-        brief = _build_staff_brief_preview(profile)
+        # 5. Forward the REAL staff brief generated by HEART (Claude) to Telegram
+        brief = arrival_result.staff_brief_markdown
+        if len(brief) > 3500:
+            brief = brief[:3400] + "\n\n_(truncated for Telegram)_"
         await ctx.bot.send_message(
             chat_id=chat_id,
-            text=brief,
+            text=f"🏨 *HEART has prepared your stay*\n\n{brief}",
             parse_mode=ParseMode.MARKDOWN,
         )
+        if arrival_result.voice_line:
+            await ctx.bot.send_message(
+                chat_id=chat_id,
+                text=f"_{arrival_result.voice_line}_",
+                parse_mode=ParseMode.MARKDOWN,
+            )
         audit.append(
             event="HAP.STAFF_BRIEF.DELIVERED",
             scope=[],
             extra={
                 "channel": "telegram",
                 "chat_id": chat_id,
-                "stay_id": "SH-20260518-LU",
+                "stay_id": arrival_result.stay_id,
+                "flow_profile": arrival_result.flow_profile,
             },
         )
         emit_event(
@@ -435,7 +546,7 @@ async def cb_consent(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
                 "ts": _now_iso(),
                 "kind": "brief_delivered",
                 "chat_id": chat_id,
-                "label": "Staff brief preview delivered",
+                "label": f"Staff brief delivered · {arrival_result.flow_profile}",
             }
         )
     elif data == "hap:decline":
@@ -478,6 +589,71 @@ def _now_iso() -> str:
     from datetime import datetime, timezone
 
     return datetime.now(timezone.utc).isoformat()
+
+
+# ---------- A2A bridge: turn a live Telegram profile into a HAP guest JSON ----------
+
+
+def _save_hap_guest_from_telegram(chat_id: int, first_name: str | None, profile: dict) -> str:
+    """Materialize the live conversation profile as a HAP-SCHEMA guest JSON
+    so the HAP tools (handshake + arrival) can operate on real data.
+
+    Returns the guest_id used by the HAP server.
+    """
+    import json as _json
+    from pathlib import Path as _Path
+
+    guests_dir = _Path(__file__).parent / "data" / "guests"
+    guests_dir.mkdir(parents=True, exist_ok=True)
+
+    guest_id = f"telegram_{chat_id}"
+    hap_guest = {
+        "guest_guid": f"hap-guid-telegram-{chat_id}",
+        "canonical_name": first_name or f"Guest {chat_id}",
+        "email_accounts": [],
+        "preferences": {
+            "lodging": {
+                "notes": profile.get("lodging") or [],
+            },
+            "dietary": {
+                "restrictions": profile.get("dietary") or [],
+            },
+            "cultural": {
+                "notes": profile.get("cultural") or [],
+            },
+            "wellness": {
+                "notes": profile.get("wellness") or [],
+            },
+        },
+        "visit_purpose": profile.get("visit_purpose"),
+        "calendar": {"conflicts": []},  # never extracted from Telegram per design
+        "health": {"context": None},
+        "minors_present": False,
+        "loyalty": [],
+        "billing": {"method": "verified_token"},
+        "source": "telegram_live_profile",
+        "captured_at": profile.get("updated_at"),
+    }
+    (guests_dir / f"{guest_id}.json").write_text(
+        _json.dumps(hap_guest, indent=2), encoding="utf-8"
+    )
+    return guest_id
+
+
+def _profile_to_scope(profile: dict) -> list[str]:
+    """Translate the live profile's filled fields into HAP scope strings."""
+    scopes: list[str] = []
+    if profile.get("visit_purpose"):
+        scopes.append("visit.purpose")
+    if profile.get("lodging"):
+        scopes.append("preferences.lodging")
+    if profile.get("dietary"):
+        scopes.append("preferences.dietary")
+    if profile.get("cultural"):
+        scopes.append("preferences.cultural")
+    if profile.get("wellness"):
+        scopes.append("preferences.wellness")
+    return scopes
 
 
 # ---------- main ----------
