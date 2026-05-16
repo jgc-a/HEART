@@ -57,8 +57,8 @@ guest if a flight is at risk.
 ### 🪡 Thread — Post-stay (T+0 to ∞)
 
 Returns memory to the guest's agent in Claude. Confirms data retention
-scope per consent. KINDRED layer keeps affection alive on significant
-dates. Predicts the next visit window. The relationship outlives the stay.
+scope per consent. Predicts the next visit window. The relationship
+outlives the stay.
 
 ---
 
@@ -69,8 +69,6 @@ dates. Predicts the next visit window. The relationship outlives the stay.
   Tripadvisor, Trustpilot, Google.
 - **ECHO** — Property Restitution Network. Predictive prevention,
   discreet recovery, structured catalog without image recognition.
-- **KINDRED** — Affective continuity. Significant dates retained with
-  explicit opt-in; never for sales, only for recognition.
 - **ASC** — ARCA Standard of Care. Five measurable dimensions that
   raise the ceiling above LQA and Forbes Five-Star.
 
@@ -137,7 +135,6 @@ owned by B Drive IT and existed before this hackathon. ARCA provides:
 - The four Adaptive Friction flows (Restorative / Standard / Celebratory / Executive)
 - The ten Guest Flow Profiles with differentiated system prompts
 - ECHO Property Restitution Network
-- KINDRED affective layer
 - Shadow ↔ ElevenLabs Conversational AI integration
 - ARCA Standard of Care (ASC) metrics engine
 - Guest-Without-Agent bootstrapping flow
