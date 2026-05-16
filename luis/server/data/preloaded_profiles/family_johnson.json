@@ -22,5 +22,14 @@
   "wellness": [],
   "notes": "HAP-RULE 4.3 active — check-in by human, documentary verification of both minors. No alcohol service to adults in pool zones with minors present.",
   "ready": true,
-  "human_check_in_required": true
+  "human_check_in_required": true,
+  "billing": {
+    "primary_recipient": "personal",
+    "personal": {
+      "full_name": "Mark & Sarah Johnson",
+      "tax_id": "SSN-on-file",
+      "address": "Seattle, WA",
+      "email": "mark.johnson@example.com"
+    }
+  }
 }

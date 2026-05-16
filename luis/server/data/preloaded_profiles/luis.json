@@ -26,5 +26,24 @@
     "occasional lower back tension (opt-in disclosure)"
   ],
   "notes": "Bleisure traveler. Past stays show preference for Stanford Sierra olive oil amenity and Filoli pivot on the weekend.",
-  "ready": true
+  "ready": true,
+  "billing": {
+    "primary_recipient": "split",
+    "split_policy": {
+      "corporate_weekdays": ["Mon", "Tue", "Wed"],
+      "personal_weekdays": ["Thu", "Fri", "Sat", "Sun"]
+    },
+    "corporate": {
+      "company_name": "B-Drive IT",
+      "tax_id": "BDI240101AB1",
+      "address": "Av. Reforma 250, Mexico City, MX",
+      "email": "facturacion@b-drive.com.mx"
+    },
+    "personal": {
+      "full_name": "Luis Vargas Fernandez",
+      "tax_id": "VAFL880101XX1",
+      "address": "Polanco, Mexico City, MX",
+      "email": "luis@personal.example"
+    }
+  }
 }

@@ -151,6 +151,166 @@ def handshake_ready_keyboard() -> InlineKeyboardMarkup:
 # In-memory pending outcomes per chat (waiting for Phase 3 confirm)
 _pending_outcomes: dict[int, dict[str, Any]] = {}
 
+# In-memory pending invoices per chat (waiting for /checkout confirm)
+_pending_invoices: dict[int, dict[str, Any]] = {}
+
+
+# ---------- billing / invoice helpers ----------
+
+
+def _load_stay_extras() -> dict[str, Any]:
+    p = Path(__file__).parent / "data" / "stay_extras.json"
+    if not p.exists():
+        return {}
+    try:
+        return json.loads(p.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return {}
+
+
+def _build_invoice(profile: dict[str, Any]) -> dict[str, Any]:
+    """Compose an invoice from the persona's billing config + stay extras."""
+    persona_id = (profile.get("persona_id") or "default").lower()
+    extras_db = _load_stay_extras()
+    stay = extras_db.get(persona_id) or extras_db.get("default") or {}
+
+    billing = profile.get("billing") or {
+        "primary_recipient": "personal",
+        "personal": {"full_name": profile.get("display_name") or "Guest"},
+    }
+    primary = billing.get("primary_recipient", "personal")
+
+    room_total = float(stay.get("room_total", 0))
+    nightly = float(stay.get("nightly_rate", 0))
+    nights = int(stay.get("stay_nights", 0))
+    tax_rate = float(stay.get("tax_rate", 0.095))
+    extras = list(stay.get("extras") or [])
+
+    split_room_corp = 0.0
+    split_room_pers = 0.0
+    if primary == "split":
+        corp_days = 3
+        pers_days = max(nights - corp_days, 0)
+        split_room_corp = round(nightly * min(corp_days, nights), 2)
+        split_room_pers = round(nightly * pers_days, 2)
+    elif primary == "corporate":
+        split_room_corp = room_total
+    else:
+        split_room_pers = room_total
+
+    extra_corp = 0.0
+    extra_pers = 0.0
+    extra_comp = 0.0
+    for e in extras:
+        amt = float(e.get("amount", 0))
+        b = e.get("billing_default", "personal")
+        if b == "corporate":
+            extra_corp += amt
+        elif b == "personal":
+            extra_pers += amt
+        else:
+            extra_comp += amt
+
+    sub_corp = round(split_room_corp + extra_corp, 2)
+    sub_pers = round(split_room_pers + extra_pers, 2)
+    subtotal = round(sub_corp + sub_pers, 2)
+    tax = round(subtotal * tax_rate, 2)
+    total = round(subtotal + tax, 2)
+
+    return {
+        "currency": stay.get("currency", "USD"),
+        "stay_dates": stay.get("stay_dates"),
+        "room_total": room_total,
+        "nightly_rate": nightly,
+        "stay_nights": nights,
+        "extras": extras,
+        "split": {
+            "corporate": {"room": split_room_corp, "extras": round(extra_corp, 2), "subtotal": sub_corp},
+            "personal": {"room": split_room_pers, "extras": round(extra_pers, 2), "subtotal": sub_pers},
+            "complimentary": round(extra_comp, 2),
+        },
+        "tax_rate": tax_rate,
+        "tax": tax,
+        "subtotal": subtotal,
+        "total": total,
+        "billing": billing,
+        "primary_recipient": primary,
+    }
+
+
+def _format_invoice_preview(invoice: dict[str, Any], display_name: str) -> str:
+    cur = invoice["currency"]
+    split = invoice["split"]
+    billing = invoice["billing"]
+    primary = invoice["primary_recipient"]
+    nights = invoice["stay_nights"]
+    nightly = invoice["nightly_rate"]
+    dates = invoice.get("stay_dates") or {}
+
+    lines: list[str] = [f"🧾 Pre-checkout invoice review · {display_name}", ""]
+    if dates.get("arrival") and dates.get("departure"):
+        lines.append(f"Stay: {dates['arrival']} → {dates['departure']}  ·  {nights} nights")
+    lines.append(f"Room: {cur} ${nightly:,.0f}/night × {nights} = ${invoice['room_total']:,.2f}")
+    lines.append("")
+    if invoice["extras"]:
+        lines.append("Extras")
+        for e in invoice["extras"]:
+            amt = float(e["amount"])
+            tag = e.get("billing_default", "personal")
+            mark = "💼" if tag == "corporate" else "👤" if tag == "personal" else "✨"
+            amt_str = "complimentary" if amt == 0 else f"${amt:,.2f}"
+            lines.append(f"  {mark} {e['item']}  ·  {amt_str}")
+        lines.append("")
+    lines.append(f"Subtotal: ${invoice['subtotal']:,.2f}")
+    lines.append(f"Tax ({invoice['tax_rate']*100:.1f}%): ${invoice['tax']:,.2f}")
+    lines.append(f"Total: ${invoice['total']:,.2f}  {cur}")
+    lines.append("")
+    lines.append("━━━━━━━━━━━━━━━━━━━━━━━")
+    lines.append("")
+
+    if primary == "split":
+        corp = billing.get("corporate", {})
+        pers = billing.get("personal", {})
+        lines.append("Bleisure split · two invoices")
+        lines.append("")
+        lines.append("📊 Corporate · Mon–Wed (3 nights)")
+        lines.append(f"  → {corp.get('company_name','—')}")
+        lines.append(f"  Tax ID: {corp.get('tax_id','—')}")
+        lines.append(f"  Send to: {corp.get('email','—')}")
+        lines.append(f"  Subtotal corp: ${split['corporate']['subtotal']:,.2f}")
+        lines.append("")
+        lines.append("📊 Personal · Thu–Sat (3 nights)")
+        lines.append(f"  → {pers.get('full_name','—')}")
+        lines.append(f"  Tax ID: {pers.get('tax_id','—')}")
+        lines.append(f"  Send to: {pers.get('email','—')}")
+        lines.append(f"  Subtotal personal: ${split['personal']['subtotal']:,.2f}")
+    elif primary == "corporate":
+        corp = billing.get("corporate", {})
+        lines.append("Single invoice · Corporate")
+        lines.append(f"  → {corp.get('company_name','—')}")
+        lines.append(f"  Tax ID: {corp.get('tax_id','—')}")
+        lines.append(f"  Send to: {corp.get('email','—')}")
+    else:
+        pers = billing.get("personal", {})
+        lines.append("Single invoice · Personal")
+        lines.append(f"  → {pers.get('full_name','—')}")
+        lines.append(f"  Tax ID: {pers.get('tax_id','—')}")
+        lines.append(f"  Send to: {pers.get('email','—')}")
+
+    return "\n".join(lines)
+
+
+def invoice_keyboard(primary: str) -> InlineKeyboardMarkup:
+    rows: list[list[InlineKeyboardButton]] = [
+        [InlineKeyboardButton("✅ Confirm & issue invoice(s)", callback_data="hap:invoice:confirm")],
+    ]
+    if primary == "split":
+        rows.append([InlineKeyboardButton("✏️ Switch to single recipient", callback_data="hap:invoice:single")])
+    else:
+        rows.append([InlineKeyboardButton("✏️ Switch recipient (corp ↔ personal)", callback_data="hap:invoice:toggle")])
+    rows.append([InlineKeyboardButton("📞 Talk to a human", callback_data="hap:invoice:human")])
+    return InlineKeyboardMarkup(rows)
+
 
 def recognized_keyboard() -> InlineKeyboardMarkup:
     """Shown when the agent recognized the user and already has a profile loaded."""
@@ -431,17 +591,17 @@ async def cmd_chatid(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
 
 
 async def cmd_checkout(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
-    """End the stay — revoke every active HAP session for this chat.
+    """Begin the 2-step checkout flow.
 
-    Emits a chain of post-stay events that feed the Departing Threads module
-    on Guillermo's HEART runtime:
+    Step 1 (this command): show the invoice preview built from the persona's
+    billing config + simulated stay extras, plus inline buttons to confirm
+    or switch the recipient.
 
-        HAP.CHECKOUT.COMPLETED          (lifecycle bookend)
-        HAP.CHECKOUT.MEMORY_SNAPSHOT    (memory returned to guest agent)
-        HAP.THREAD.POST_STAY_QUERY      (Thread agent learns for next time)
-        HAP.PLUGIN.SESSION_REVOKED      (covered by checkout_tool)
-
-    Plus a warm farewell message to the guest in Telegram.
+    Step 2 (callback `hap:invoice:confirm`): emits the full billing event
+    chain (HAP.BILLING.RESOLVED, HAP.CORPORATE.BILLING_VALIDATED,
+    HAP.IN_STAY.WEEKEND_HANDOFF for split, HAP.CHECKOUT.INVOICE_ISSUED),
+    revokes the HAP session via checkout_tool, emits HAP.CHECKOUT.COMPLETED
+    + MEMORY_SNAPSHOT + THREAD.POST_STAY_QUERY, then sends the warm farewell.
     """
     chat = update.effective_chat
     user = update.effective_user
@@ -456,35 +616,158 @@ async def cmd_checkout(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
         or (user.first_name if user else None)
         or "Guest"
     )
-    first_name = display.split()[0]
-    persona_id = profile.get("persona_id") or "guest"
-    purpose = profile.get("visit_purpose") or "your stay"
 
-    # Revoke all active sessions for this chat
-    result = checkout_tool.run(
-        checkout_tool.CheckoutInput(
-            guest_id=guest_id,
-            reason="user_checkout",
-        )
-    )
-
-    if not result.revoked:
+    if not profile.get("persona_id") and not profile.get("visit_purpose"):
         await update.message.reply_text(
-            "🔌 No active HAP session to close. Use /start to begin a new stay."
+            "🔌 No active stay on file. Use /start or /persona to begin one first."
         )
         return
 
-    # Best stay_id we can resolve — pull from the most recent active session
-    stay_id = "SH-unknown"
-    try:
-        # checkout_tool.run() already wrote HAP.PLUGIN.SESSION_REVOKED;
-        # we look back at the audit log for the latest stay_id for this guest.
-        for entry in audit.read_for_session(""):  # placeholder; fallback below
-            pass
-    except Exception:
-        pass
+    invoice = _build_invoice(profile)
+    _pending_invoices[chat_id] = {
+        "invoice": invoice,
+        "profile": profile,
+        "display": display,
+        "guest_id": guest_id,
+    }
 
-    # ---- emit the departing-threads sequence ----
+    audit.append(
+        event="HAP.CHECKOUT.INVOICE_REVIEW_REQUESTED",
+        guest_id=guest_id,
+        scope=["billing.review"],
+        extra={
+            "chat_id": chat_id,
+            "primary_recipient": invoice["primary_recipient"],
+            "total": invoice["total"],
+        },
+    )
+    emit_event(
+        {
+            "ts": _now_iso(),
+            "kind": "invoice_review",
+            "chat_id": chat_id,
+            "label": f"Invoice review · {invoice['primary_recipient']} · {invoice['currency']} ${invoice['total']:,.2f}",
+        }
+    )
+
+    text = _format_invoice_preview(invoice, display)
+    await _safe_send_message(ctx, chat_id, text, try_markdown=False)
+    try:
+        await ctx.bot.send_message(
+            chat_id=chat_id,
+            text="↑ Review the invoice above and confirm:",
+            reply_markup=invoice_keyboard(invoice["primary_recipient"]),
+        )
+    except Exception as exc:  # noqa: BLE001
+        print(f"[telegram] invoice keyboard send failed: {exc}")
+
+
+async def _process_invoice_and_checkout(query, ctx: ContextTypes.DEFAULT_TYPE, chat_id: int) -> None:
+    """Phase 2 of checkout: emit billing events, revoke session, farewell."""
+    pending = _pending_invoices.get(chat_id)
+    if not pending:
+        await _safe_edit_message(query, "⚠️ Session expired. Send /checkout to begin again.")
+        return
+
+    invoice = pending["invoice"]
+    profile = pending["profile"]
+    display = pending["display"]
+    first_name = display.split()[0]
+    guest_id = pending["guest_id"]
+    primary = invoice["primary_recipient"]
+    cur = invoice["currency"]
+
+    # billing events
+    audit.append(
+        event="HAP.BILLING.RESOLVED",
+        guest_id=guest_id,
+        scope=["billing"],
+        extra={"chat_id": chat_id, "primary_recipient": primary, "total": invoice["total"], "currency": cur},
+    )
+    emit_event(
+        {
+            "ts": _now_iso(),
+            "kind": "billing_resolved",
+            "chat_id": chat_id,
+            "label": f"Billing resolved · {primary} · {cur} ${invoice['total']:,.2f}",
+        }
+    )
+
+    if primary in ("corporate", "split"):
+        corp = invoice["billing"].get("corporate", {})
+        audit.append(
+            event="HAP.CORPORATE.BILLING_VALIDATED",
+            guest_id=guest_id,
+            scope=["billing.corporate"],
+            extra={
+                "chat_id": chat_id,
+                "company_name": corp.get("company_name"),
+                "tax_id": corp.get("tax_id"),
+                "amount": invoice["split"]["corporate"]["subtotal"],
+            },
+        )
+        emit_event(
+            {
+                "ts": _now_iso(),
+                "kind": "billing_corporate_validated",
+                "chat_id": chat_id,
+                "label": f"Corporate invoice → {corp.get('company_name','?')} · ${invoice['split']['corporate']['subtotal']:,.2f}",
+            }
+        )
+
+    if primary == "split":
+        audit.append(
+            event="HAP.IN_STAY.WEEKEND_HANDOFF",
+            guest_id=guest_id,
+            scope=["billing.split"],
+            extra={
+                "chat_id": chat_id,
+                "corporate_subtotal": invoice["split"]["corporate"]["subtotal"],
+                "personal_subtotal": invoice["split"]["personal"]["subtotal"],
+            },
+        )
+        emit_event(
+            {
+                "ts": _now_iso(),
+                "kind": "billing_split_applied",
+                "chat_id": chat_id,
+                "label": f"Bleisure split · corp ${invoice['split']['corporate']['subtotal']:,.2f} · personal ${invoice['split']['personal']['subtotal']:,.2f}",
+            }
+        )
+
+    audit.append(
+        event="HAP.CHECKOUT.INVOICE_ISSUED",
+        guest_id=guest_id,
+        scope=["billing.issued"],
+        extra={"chat_id": chat_id, "primary_recipient": primary, "total": invoice["total"], "currency": cur},
+    )
+    emit_event(
+        {
+            "ts": _now_iso(),
+            "kind": "invoice_issued",
+            "chat_id": chat_id,
+            "label": f"Invoice issued · {primary} · {cur} ${invoice['total']:,.2f}",
+        }
+    )
+
+    confirm_lines = ["✅ Invoice(s) issued", ""]
+    if primary == "split":
+        confirm_lines.append(
+            f"Corporate → {invoice['billing']['corporate'].get('email','—')}: ${invoice['split']['corporate']['subtotal']:,.2f}"
+        )
+        confirm_lines.append(
+            f"Personal → {invoice['billing']['personal'].get('email','—')}: ${invoice['split']['personal']['subtotal']:,.2f}"
+        )
+    elif primary == "corporate":
+        confirm_lines.append(f"Sent to {invoice['billing']['corporate'].get('email','—')}: {cur} ${invoice['total']:,.2f}")
+    else:
+        confirm_lines.append(f"Sent to {invoice['billing']['personal'].get('email','—')}: {cur} ${invoice['total']:,.2f}")
+    confirm_lines.append("")
+    confirm_lines.append("Closing your HAP session now…")
+    await _safe_edit_message(query, "\n".join(confirm_lines))
+
+    # revoke + farewell
+    result = checkout_tool.run(checkout_tool.CheckoutInput(guest_id=guest_id, reason="user_checkout"))
 
     audit.append(
         event="HAP.CHECKOUT.COMPLETED",
@@ -494,9 +777,9 @@ async def cmd_checkout(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
             "channel": "telegram",
             "chat_id": chat_id,
             "guest_display": display,
-            "persona_id": persona_id,
-            "purpose": purpose,
             "sessions_revoked": len(result.revoked),
+            "invoice_total": invoice["total"],
+            "primary_recipient": primary,
         },
     )
     emit_event(
@@ -504,7 +787,7 @@ async def cmd_checkout(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
             "ts": _now_iso(),
             "kind": "checkout_completed",
             "chat_id": chat_id,
-            "label": f"Checkout complete · {display} · {len(result.revoked)} session(s) revoked",
+            "label": f"Checkout · {display} · {len(result.revoked)} session(s) revoked · invoice {primary}",
         }
     )
 
@@ -512,12 +795,7 @@ async def cmd_checkout(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
         event="HAP.CHECKOUT.MEMORY_SNAPSHOT",
         guest_id=guest_id,
         scope=["post_stay.memory"],
-        extra={
-            "channel": "telegram",
-            "chat_id": chat_id,
-            "guest_display": display,
-            "persona_id": persona_id,
-        },
+        extra={"chat_id": chat_id, "guest_display": display},
     )
     emit_event(
         {
@@ -532,38 +810,33 @@ async def cmd_checkout(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
         event="HAP.THREAD.POST_STAY_QUERY",
         guest_id=guest_id,
         scope=["post_stay.learning"],
-        extra={
-            "channel": "telegram",
-            "chat_id": chat_id,
-            "guest_display": display,
-            "persona_id": persona_id,
-            "purpose": purpose,
-        },
+        extra={"chat_id": chat_id, "guest_display": display},
     )
     emit_event(
         {
             "ts": _now_iso(),
             "kind": "thread_post_stay",
             "chat_id": chat_id,
-            "label": f"Thread agent learning from {display}'s stay for next time",
+            "label": f"Thread agent learning from {display}'s stay",
         }
     )
 
-    # ---- warm farewell to the guest ----
-
     farewell = (
-        f"🔌 *Checkout complete · {display}*\n\n"
-        "The HAP handshake between your agent and Rosewood has come to a close.\n"
-        f"_{len(result.revoked)} session(s) revoked · scope cleared · memory returned._\n\n"
-        "Your refined preferences travel with _you_ — not with us. The audit retains "
+        f"🔌 Checkout complete · {display}\n\n"
+        "Your invoice is settled, the HAP handshake between your agent and "
+        "Rosewood has come to a close.\n"
+        f"{len(result.revoked)} session(s) revoked · scope cleared · memory returned.\n\n"
+        "Your refined preferences travel with you — not with us. The audit retains "
         "only the operational signal, pseudonymized.\n\n"
-        "*It has been our privilege to host you, " + first_name + ".*\n\n"
+        f"It has been our privilege to host you, {first_name}.\n\n"
         "May the trails of Windy Hill keep their morning quiet for your return, "
         "and may your next matcha land just at temperature, wherever it finds you.\n\n"
-        "_Until next time — ahead of time._\n\n"
+        "Until next time — ahead of time.\n\n"
         "— Rosewood Sand Hill"
     )
-    await _safe_send_message(ctx, chat_id, farewell)
+    await _safe_send_message(ctx, chat_id, farewell, try_markdown=False)
+
+    _pending_invoices.pop(chat_id, None)
 
 
 async def cmd_persona(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
@@ -818,6 +1091,78 @@ async def cb_consent(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
 
     if data == "hap:confirm_outcome":
         await _handle_confirm_outcome(query, ctx, chat_id)
+        return
+
+    if data == "hap:invoice:confirm":
+        await _process_invoice_and_checkout(query, ctx, chat_id)
+        return
+
+    if data == "hap:invoice:toggle":
+        pending = _pending_invoices.get(chat_id)
+        if not pending:
+            await _safe_edit_message(query, "⚠️ Invoice session expired. Send /checkout again.")
+            return
+        inv = pending["invoice"]
+        new_primary = "personal" if inv["primary_recipient"] == "corporate" else "corporate"
+        inv["primary_recipient"] = new_primary
+        inv["split"]["corporate"]["subtotal"] = inv["subtotal"] if new_primary == "corporate" else 0
+        inv["split"]["personal"]["subtotal"] = inv["subtotal"] if new_primary == "personal" else 0
+        await _safe_send_message(ctx, chat_id, _format_invoice_preview(inv, pending["display"]), try_markdown=False)
+        try:
+            await ctx.bot.send_message(
+                chat_id=chat_id,
+                text=f"Switched to {new_primary} recipient. Confirm or switch again:",
+                reply_markup=invoice_keyboard(new_primary),
+            )
+        except Exception as exc:  # noqa: BLE001
+            print(f"[telegram] toggle keyboard send failed: {exc}")
+        return
+
+    if data == "hap:invoice:single":
+        pending = _pending_invoices.get(chat_id)
+        if not pending:
+            await _safe_edit_message(query, "⚠️ Invoice session expired. Send /checkout again.")
+            return
+        inv = pending["invoice"]
+        inv["primary_recipient"] = "corporate"
+        inv["split"]["corporate"]["subtotal"] = inv["subtotal"]
+        inv["split"]["personal"]["subtotal"] = 0
+        await _safe_send_message(ctx, chat_id, _format_invoice_preview(inv, pending["display"]), try_markdown=False)
+        try:
+            await ctx.bot.send_message(
+                chat_id=chat_id,
+                text="Collapsed to a single corporate invoice. Confirm or switch:",
+                reply_markup=invoice_keyboard("corporate"),
+            )
+        except Exception as exc:  # noqa: BLE001
+            print(f"[telegram] single keyboard send failed: {exc}")
+        return
+
+    if data == "hap:invoice:human":
+        audit.append(
+            event="HAP.IN_STAY.COMPLAINT_ESCALATED",
+            guest_id=f"telegram_{chat_id}",
+            scope=["billing.dispute"],
+            extra={
+                "chat_id": chat_id,
+                "rule": "billing dispute → human",
+                "escalation_targets": ["Duty Manager", "Guest Relations"],
+            },
+        )
+        emit_event(
+            {
+                "ts": _now_iso(),
+                "kind": "billing_escalated",
+                "chat_id": chat_id,
+                "label": "Billing dispute escalated · Duty Manager paged",
+            }
+        )
+        await _safe_send_message(
+            ctx,
+            chat_id,
+            "📞 A member of our team is on the way.\n\nThe HAP plugin steps out — billing concerns go to a human at Rosewood. Your session stays open; nothing has been charged or revoked.",
+            try_markdown=False,
+        )
         return
 
     # Legacy stub kept so any orphan message buttons don't crash; never enters now.

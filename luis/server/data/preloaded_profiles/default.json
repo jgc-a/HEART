@@ -18,5 +18,14 @@
   ],
   "wellness": [],
   "notes": "Returning guest with light preference history. Agent will share visit purpose and minimal preferences; HEART will fill the rest from Sense of Place defaults.",
-  "ready": true
+  "ready": true,
+  "billing": {
+    "primary_recipient": "personal",
+    "personal": {
+      "full_name": "Guest",
+      "tax_id": "n/a",
+      "address": "n/a",
+      "email": "guest@example.com"
+    }
+  }
 }

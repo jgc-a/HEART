@@ -21,5 +21,20 @@
   ],
   "wellness": [],
   "notes": "Corporate flow. Past stays: minimal lobby presence, car service pre-coordinated for off-property meetings.",
-  "ready": true
+  "ready": true,
+  "billing": {
+    "primary_recipient": "corporate",
+    "corporate": {
+      "company_name": "B-Drive IT",
+      "tax_id": "BDI240101AB1",
+      "address": "Av. Reforma 250, Mexico City, MX",
+      "email": "facturacion@b-drive.com.mx"
+    },
+    "personal": {
+      "full_name": "Guillermo Chávez",
+      "tax_id": "CXJG850315PQ4",
+      "address": "Mexico City, MX",
+      "email": "guillermo@personal.example"
+    }
+  }
 }

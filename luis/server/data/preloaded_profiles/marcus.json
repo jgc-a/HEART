@@ -23,5 +23,20 @@
   ],
   "wellness": [],
   "notes": "Discretion paramount. Past stays: no staff name-drop in any channel, suite turndown only after explicit cue.",
-  "ready": true
+  "ready": true,
+  "billing": {
+    "primary_recipient": "corporate",
+    "corporate": {
+      "company_name": "Helios AI Inc.",
+      "tax_id": "EIN-87-4291036",
+      "address": "3000 Sand Hill Road, Suite 4-200, Menlo Park, CA",
+      "email": "ap@helios.ai"
+    },
+    "personal": {
+      "full_name": "Marcus Chen",
+      "tax_id": "SSN-on-file",
+      "address": "Atherton, CA",
+      "email": "marcus@helios.ai"
+    }
+  }
 }
