@@ -206,17 +206,18 @@ export default function WelcomeEmailPage() {
                 )}
               </div>
 
-              {/* PATH B — On your phone */}
+              {/* PATH B — On your phone, agent-fronted */}
               <div className="border border-bronze/30 bg-bronze/[0.04] rounded-md p-5">
                 <div className="text-[0.65rem] uppercase tracking-[0.22em] text-bronze font-semibold mb-3">
-                  On your phone · without a desktop Claude
+                  On your phone · your agent already lives in Telegram
                 </div>
                 <div className="flex flex-col sm:flex-row sm:items-center gap-5">
                   <div className="flex-1">
                     <p className="text-ink/80 text-[0.9rem] leading-relaxed mb-4">
-                      Tap below to open the Rosewood concierge on Telegram.
-                      Your phone becomes your Guest Agent for this stay — same
-                      protocol, same handshake, same TTL.
+                      In 2030 your messaging app is wired to your personal
+                      agent — your Claude, your ChatGPT, whichever you use.
+                      Tap below and your agent will handshake with Rosewood
+                      on your behalf. You only confirm what was negotiated.
                     </p>
                     <a
                       href={TG_DEEPLINK}
@@ -224,10 +225,11 @@ export default function WelcomeEmailPage() {
                       rel="noopener noreferrer"
                       className="inline-flex items-center justify-center w-full sm:w-auto bg-bronze text-cream hover:bg-bronze/90 uppercase tracking-[0.22em] text-[0.78rem] font-medium px-7 py-3.5 rounded-md"
                     >
-                      ✈️ Open Rosewood on Telegram
+                      ✈️ Let my agent handle it
                     </a>
                     <div className="mt-3 text-[0.7rem] text-ink/50">
-                      Bot: <code className="font-mono">@{TELEGRAM_BOT}</code>
+                      Routes to <code className="font-mono">@{TELEGRAM_BOT}</code>
+                      , which speaks HAP on your phone&apos;s behalf.
                     </div>
                   </div>
                   <div className="hidden sm:flex flex-col items-center shrink-0">
@@ -248,9 +250,8 @@ export default function WelcomeEmailPage() {
 
               {/* PATH C — Cross-device */}
               <div className="text-center text-ink/55 text-[0.78rem] py-2">
-                Reading this on a phone? The Telegram button above is for you.
-                Reading on a laptop? Use Claude Desktop above, or scan the QR
-                with your phone for the Telegram path.
+                Same protocol both ways. Same audit, same TTL. Your agent
+                handles the handshake; you only confirm what was negotiated.
               </div>
 
               {state.kind === "installed_pending_restart" && !installed && (
